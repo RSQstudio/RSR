@@ -112,6 +112,13 @@ class CoreSafetyTests(unittest.TestCase):
             self.assertIn("Active:    ", output.getvalue())
             self.assertIn("→ 1 skills loaded", output.getvalue())
 
+    def test_get_active_skills_includes_nested_unmanaged_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            active = Path(temp_dir) / "active"
+            self._skill(active / "productivity", "caveman")
+
+            self.assertEqual(vault_manager.get_active_skills(active), ["caveman"])
+
     def test_status_distinguishes_configured_and_active_always_keep_skills(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

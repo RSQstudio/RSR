@@ -62,14 +62,18 @@ def _skill_symlinks(active_dir: Path) -> dict[str, Path]:
 
 
 def _real_skill_dirs(active_dir: Path) -> dict[str, Path]:
-    """Return unmanaged real skill directories currently present in active/."""
+    """Return unmanaged real skill directories at any depth in active/."""
     if not active_dir.is_dir():
         return {}
-    return {
-        entry.name: entry
-        for entry in active_dir.iterdir()
-        if not entry.is_symlink() and entry.is_dir() and (entry / "SKILL.md").is_file()
-    }
+
+    result: dict[str, Path] = {}
+    for skill_file in active_dir.rglob("SKILL.md"):
+        skill_dir = skill_file.parent
+        relative = skill_dir.relative_to(active_dir)
+        if skill_dir.is_symlink() or any(part.startswith(".") for part in relative.parts):
+            continue
+        result.setdefault(skill_dir.name, skill_dir)
+    return result
 
 
 def get_active_skills(active_path: str | Path) -> list[str]:
