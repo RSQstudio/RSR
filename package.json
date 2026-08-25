@@ -6,7 +6,7 @@
   "author": "RSQ",
   "repository": {
     "type": "git",
-    "url": "https://github.com/RED-NTWRK/RSR.git"
+    "url": "https://github.com/RSQstudio/RSR.git"
   },
   "keywords": ["ai", "agent", "skills", "claude-code", "codex", "cursor", "hermes", "skill-router"],
   "bin": {

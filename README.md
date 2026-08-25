@@ -19,7 +19,7 @@ RSQ Skill Router keeps the full library in a vault, indexes it locally, and expo
 ### Recommended: bootstrap installer
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/RED-NTWRK/RSR/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/RSQstudio/RSR/main/install.sh | bash
 ```
 
 The bootstrap installer:
@@ -37,7 +37,7 @@ The installer preselects `caveman` and `anti-slop` when installed. `caveman` kee
 ### Alternative: install from source
 
 ```bash
-git clone https://github.com/RED-NTWRK/RSR.git ~/.rsq-skill-router
+git clone https://github.com/RSQstudio/RSR.git ~/.rsq-skill-router
 cd ~/.rsq-skill-router
 python3 -m pip install .
 skill-router install

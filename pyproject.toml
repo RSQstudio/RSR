@@ -24,8 +24,8 @@ requires-python = ">=3.10"
 dependencies = ["PyYAML>=6.0"]
 
 [project.urls]
-Homepage = "https://github.com/RED-NTWRK/RSR"
-Repository = "https://github.com/RED-NTWRK/RSR.git"
+Homepage = "https://github.com/RSQstudio/RSR"
+Repository = "https://github.com/RSQstudio/RSR.git"
 
 [project.scripts]
 skill-router = "src.skill_router_cli:main"
