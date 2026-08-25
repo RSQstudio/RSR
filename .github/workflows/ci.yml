@@ -20,6 +20,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       - run: python -m pip install --upgrade pip
       - run: python -m pip install . pytest ruff bandit
       - run: python -m compileall -q src tests
