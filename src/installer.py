@@ -216,7 +216,7 @@ def run_install(
 
     print()
     print("  Supported agents:")
-    for agent in agent_detector.AGENTS:
+    for agent in agent_detector.list_agents():
         marker = " ←" if agent.name == detected.name and detected.detected else ""
         print(f"    {'✓' if agent.detected else ' '} {agent.name}{marker}")
 

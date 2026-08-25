@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -111,6 +112,25 @@ class CoreSafetyTests(unittest.TestCase):
             self.assertIn("Active:    ", output.getvalue())
             self.assertIn("→ 1 skills loaded", output.getvalue())
 
+    def test_status_distinguishes_configured_and_active_always_keep_skills(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            active = root / "active"
+            vault = root / "vault"
+            self._skill(active, "rsq-skill-router")
+            config = {
+                "paths": {"active": str(active), "vault": str(vault), "index_cache": str(root / "missing.json")},
+                "always_keep": ["caveman", "rsq-skill-router"],
+            }
+
+            output = StringIO()
+            with redirect_stdout(output):
+                skill_router_cli.cmd_status(config)
+
+            report = output.getvalue()
+            self.assertIn("Always keep: 1 active / 2 configured", report)
+            self.assertIn("Always keep unavailable: caveman", report)
+
     def test_sweep_creates_inbox_before_first_move(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
@@ -167,12 +187,42 @@ class AgentDetectorTests(unittest.TestCase):
 
             with patch.object(agent_detector, "AGENTS", [hermes, claude]), patch.object(
                 agent_detector, "_is_hermes_running", return_value=False
-            ):
+            ), patch("shutil.which", return_value=None):
                 first = {agent.name: agent for agent in agent_detector.list_agents()}
                 self.assertTrue(first["Claude Code"].detected)
                 claude_config.rmdir()
                 second = {agent.name: agent for agent in agent_detector.list_agents()}
                 self.assertFalse(second["Claude Code"].detected)
+
+    def test_detect_agent_prefers_highest_priority_detected_cli(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            claude = agent_detector.AgentInfo("Claude Code", root / "claude-skills", root / "claude-config", "claude", 95)
+            codex = agent_detector.AgentInfo("OpenAI Codex", root / "codex-skills", root / "codex-config", "codex", 90)
+
+            with patch.object(agent_detector, "AGENTS", [codex, claude]), patch(
+                "shutil.which", side_effect=lambda executable: f"/usr/local/bin/{executable}"
+            ):
+                detected = agent_detector.detect_agent()
+
+            self.assertEqual(detected.name, "Claude Code")
+            self.assertTrue(detected.detected)
+
+    def test_list_agents_detects_installed_clis_independently(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            claude = agent_detector.AgentInfo("Claude Code", root / "claude-skills", root / "claude-config", "claude", 95)
+            codex = agent_detector.AgentInfo("OpenAI Codex", root / "codex-skills", root / "codex-config", "codex", 90)
+
+            with patch.object(agent_detector, "AGENTS", [claude, codex]), patch(
+                "shutil.which", side_effect=lambda executable: f"/usr/local/bin/{executable}"
+            ):
+                agents = {agent.name: agent for agent in agent_detector.list_agents()}
+
+            self.assertTrue(agents["Claude Code"].detected)
+            self.assertIn("CLI executable found", agents["Claude Code"].evidence)
+            self.assertTrue(agents["OpenAI Codex"].detected)
+            self.assertIn("CLI executable found", agents["OpenAI Codex"].evidence)
 
 
 class CliEntrypointTests(unittest.TestCase):
@@ -186,6 +236,30 @@ class CliEntrypointTests(unittest.TestCase):
             self.assertEqual(config["paths"]["vault"], "/tmp/vault")
             self.assertEqual(config["matching"]["strategy"], "keyword")
             self.assertEqual(config["always_keep"], [])
+
+    def test_load_config_uses_package_default_when_run_outside_repo(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            package_root = root / "package"
+            package_root.mkdir()
+            (package_root / "config.yaml").write_text(
+                "always_keep:\n  - caveman\n  - rsq-skill-router\n",
+                encoding="utf-8",
+            )
+            working_dir = root / "elsewhere"
+            working_dir.mkdir()
+            previous_cwd = Path.cwd()
+
+            try:
+                os.chdir(working_dir)
+                with patch.object(
+                    skill_router_cli, "PACKAGE_ROOT", package_root, create=True
+                ):
+                    config = skill_router_cli.load_config()
+            finally:
+                os.chdir(previous_cwd)
+
+            self.assertEqual(config["always_keep"], ["caveman", "rsq-skill-router"])
 
     def test_module_cli_index_runs_from_package_imports(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

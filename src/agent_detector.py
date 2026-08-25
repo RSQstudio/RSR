@@ -14,6 +14,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from pathlib import Path
+import shutil
 
 
 @dataclass
@@ -139,70 +140,56 @@ def _is_codex_running() -> bool:
     return (Path.home() / ".codex").is_dir()
 
 
+def _detect_registered_agent(registered: AgentInfo) -> AgentInfo:
+    """Collect independent local evidence for one registered agent."""
+    agent = replace(registered, detected=False, evidence=[])
+
+    if agent.name == "Hermes Agent" and _is_hermes_running():
+        agent.evidence.append("hermes-gateway systemd service active")
+
+    if shutil.which(agent.cli_name):
+        agent.evidence.append("CLI executable found")
+
+    if agent.skills_dir and agent.skills_dir.is_dir():
+        has_skills = any(
+            (agent.skills_dir / d / "SKILL.md").exists()
+            for d in agent.skills_dir.iterdir()
+            if d.is_dir() and not d.name.startswith(".")
+        )
+        if has_skills:
+            agent.evidence.append("skills directory with SKILL.md files found")
+
+    if agent.config_dir and agent.config_dir.is_dir():
+        agent.evidence.append("config directory found")
+
+    agent.detected = bool(agent.evidence)
+    return agent
+
+
 def detect_agent() -> AgentInfo:
-    """Auto-detect which AI agent framework is installed and active.
+    """Auto-detect the highest-priority installed or active agent framework.
 
-    Strategy (in order):
-    1. Check for running Hermes gateway (systemd)
-    2. Check for existing skill directories with SKILL.md files
-    3. Check for agent config directories
-    4. Fallback: ask user or use generic
-
-    Returns the best-matching AgentInfo with .detected=True.
+    Each framework is evaluated independently for a running service, CLI binary,
+    skills directory, and config directory. The highest-priority positive match
+    remains the default installation target.
     """
-    # Phase 1: Look for active agents with real skill directories
-    candidates: list[AgentInfo] = []
+    candidates = [
+        _detect_registered_agent(registered)
+        for registered in sorted(AGENTS, key=lambda agent: -agent.priority)
+    ]
 
-    for registered in sorted(AGENTS, key=lambda a: -a.priority):
-        agent = replace(registered, detected=False, evidence=[])
-        # Check for running process signals
-        if agent.name == "Hermes Agent" and _is_hermes_running():
-            agent.detected = True
-            agent.evidence.append("hermes-gateway systemd service active")
-            candidates.append(agent)
-            continue
-
-        # Check if skills directory exists AND has SKILL.md files
-        if agent.skills_dir and agent.skills_dir.is_dir():
-            has_skills = any(
-                (agent.skills_dir / d / "SKILL.md").exists()
-                for d in agent.skills_dir.iterdir()
-                if d.is_dir() and not d.name.startswith(".")
-            )
-            if has_skills:
-                agent.detected = True
-                agent.evidence.append("skills directory with SKILL.md files found")
-                candidates.append(agent)
-                continue
-
-        # Check if config directory exists
-        if agent.config_dir and agent.config_dir.is_dir():
-            agent.detected = True
-            agent.evidence.append("config directory found")
-            candidates.append(agent)
-            continue
-
-    # Return highest-priority detected agent
-    if candidates:
-        return candidates[0]
+    for agent in candidates:
+        if agent.detected:
+            return agent
 
     # Fallback: return Hermes as default (most common in RSQ ecosystem)
-    # but mark it as undetected so the installer asks
-    fallback = replace(AGENTS[0], detected=False, evidence=[])
-    return fallback
+    # but mark it as undetected so the installer asks.
+    return replace(AGENTS[0], detected=False, evidence=[])
 
 
 def list_agents() -> list[AgentInfo]:
-    """Return all registered agents with detection status."""
-    detected = detect_agent()
-    results: list[AgentInfo] = []
-    for registered in AGENTS:
-        agent = replace(registered, detected=False, evidence=[])
-        if agent.name == detected.name and detected.detected:
-            results.append(detected)
-        else:
-            results.append(agent)
-    return results
+    """Return every registered agent with its own detection status."""
+    return [_detect_registered_agent(registered) for registered in AGENTS]
 
 
 def resolve_skills_dir(agent_hint: str | None = None) -> Path:

@@ -68,6 +68,8 @@ DEFAULT_CONFIG = {
     "always_keep": [],
 }
 
+PACKAGE_ROOT = Path(__file__).resolve().parent.parent
+
 
 def _merge_config(defaults: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any]:
     """Merge a user config over defaults without sharing mutable nested values."""
@@ -88,6 +90,8 @@ def load_config(config_path: str | Path | None = None) -> dict[str, Any]:
         Path("~/.config/skill-router/config.yaml").expanduser(),
         Path("config.json"),
         Path("config.yaml"),
+        PACKAGE_ROOT / "config.json",
+        PACKAGE_ROOT / "config.yaml",
     ]
 
     for sp in search_paths:
@@ -210,12 +214,20 @@ def cmd_status(config: dict[str, Any]) -> None:
     active_skills = get_active_skills(active)
     vault_skills = get_vault_skills(vault)
     always_keep = config.get("always_keep", [])
+    active_always_keep = [name for name in always_keep if name in active_skills]
+    unavailable_always_keep = [name for name in always_keep if name not in active_skills]
 
     print("═══ Skill Router Status ═══\n")
     print(f"Vault:     {vault} → {len(vault_skills)} skills available")
     print(f"Active:    {active} → {len(active_skills)} skills loaded")
     print(f"Overhead:  {len(active_skills)}/{len(vault_skills)} ({len(active_skills)/max(len(vault_skills),1)*100:.0f}%)")
-    print(f"Always keep: {len(always_keep)} → {', '.join(always_keep[:5])}" + ("..." if len(always_keep) > 5 else ""))
+    print(
+        f"Always keep: {len(active_always_keep)} active / {len(always_keep)} configured"
+        f" → {', '.join(always_keep[:5])}"
+        + ("..." if len(always_keep) > 5 else "")
+    )
+    if unavailable_always_keep:
+        print(f"Always keep unavailable: {', '.join(unavailable_always_keep)}")
 
     if cache.exists():
         index = load_index(cache)
