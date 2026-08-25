@@ -9,9 +9,9 @@
     <linearGradient id="violetGlow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#46348b"/><stop offset="1" stop-color="#24285f"/></linearGradient>
     <linearGradient id="greenGlow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0c604e"/><stop offset="1" stop-color="#123d44"/></linearGradient>
     <linearGradient id="amberGlow" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#8b5317"/><stop offset="1" stop-color="#473419"/></linearGradient>
-    <marker id="arrowCyan" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 1L8 5L0 9Z" fill="#41d8ff"/></marker>
-    <marker id="arrowViolet" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 1L8 5L0 9Z" fill="#b39cff"/></marker>
-    <marker id="arrowGreen" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 1L8 5L0 9Z" fill="#55e6b0"/></marker>
+    <marker id="arrowCyan" markerWidth="14" markerHeight="12" refX="11" refY="6" orient="auto"><path d="M0 1L11 6L0 11Z" fill="#41d8ff"/></marker>
+    <marker id="arrowViolet" markerWidth="14" markerHeight="12" refX="11" refY="6" orient="auto"><path d="M0 1L11 6L0 11Z" fill="#b39cff"/></marker>
+    <marker id="arrowGreen" markerWidth="14" markerHeight="12" refX="11" refY="6" orient="auto"><path d="M0 1L11 6L0 11Z" fill="#55e6b0"/></marker>
     <style>
       .sans{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}.mono{font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace}.kicker{fill:#7f94b6;font-size:12px;font-weight:700;letter-spacing:2.3px}.title{fill:#eef5ff;font-size:29px;font-weight:700;letter-spacing:-.4px}.sub{fill:#9eb0ca;font-size:14px}.zone{fill:#0c172a;fill-opacity:.78;stroke:#293b58;stroke-width:1.2}.zoneTitle{fill:#d9e7fb;font-size:14px;font-weight:700;letter-spacing:1.2px}.zoneMeta{fill:#6f88ac;font-size:11px;letter-spacing:1.4px}.label{fill:#e8f0ff;font-size:14px;font-weight:650}.small{fill:#a6b9d5;font-size:11.5px}.tiny{fill:#7187aa;font-size:10px;letter-spacing:.6px}.tag{font-size:10px;font-weight:700;letter-spacing:1.1px}.edgeLabel{fill:#91a9cb;font-size:10px;letter-spacing:.8px}.rule{stroke:#29405f;stroke-width:1}.divider{stroke:#1e304c;stroke-width:1}.card{stroke-width:1.25}.num{fill:#96a8c3;font-size:11px;font-weight:700;letter-spacing:1.3px}
     </style>
@@ -27,21 +27,26 @@
   <text x="54" y="138" class="sans sub">Keep the full skill library intact. Load only the capability set the current task needs.</text>
   <line x1="54" y1="163" x2="1146" y2="163" class="rule"/>
 
-  <!-- Flow connectors: rendered first so they remain behind cards. -->
-  <path d="M352 549H410V395H465" fill="none" stroke="#55e6b0" stroke-width="2" marker-end="url(#arrowGreen)"/>
-  <path d="M598 354V435" fill="none" stroke="#41d8ff" stroke-width="2" marker-end="url(#arrowCyan)"/>
-  <path d="M598 421V435" fill="none" stroke="#b39cff" stroke-width="2" marker-end="url(#arrowViolet)"/>
-  <path d="M598 487V501" fill="none" stroke="#b39cff" stroke-width="2" marker-end="url(#arrowViolet)"/>
-  <path d="M732 536H845" fill="none" stroke="#55e6b0" stroke-width="2" marker-end="url(#arrowGreen)"/>
-  <path d="M1035 573C1035 625 752 633 706 571" fill="none" stroke="#8da2c2" stroke-width="1.4" stroke-dasharray="5 6" marker-end="url(#arrowViolet)"/>
+  <!-- Zone fills render before connectors. Cards render after connectors. -->
+  <rect x="45" y="198" width="330" height="408" rx="14" class="zone"/>
+  <rect x="442" y="198" width="313" height="408" rx="14" class="zone"/>
+  <rect x="822" y="198" width="333" height="408" rx="14" class="zone"/>
+
+  <!-- Arrowheads stop in an 11px gap before each target card. -->
+  <path d="M352 549H410V395H454" fill="none" stroke="#55e6b0" stroke-width="2.7" marker-end="url(#arrowGreen)"/>
+  <path d="M703 330H744V424H743" fill="none" stroke="#41d8ff" stroke-width="2.7" marker-end="url(#arrowCyan)"/>
+  <path d="M598 421V424" fill="none" stroke="#b39cff" stroke-width="2.7" marker-end="url(#arrowViolet)"/>
+  <path d="M598 487V490" fill="none" stroke="#b39cff" stroke-width="2.7" marker-end="url(#arrowViolet)"/>
+  <path d="M732 536H834" fill="none" stroke="#55e6b0" stroke-width="2.7" marker-end="url(#arrowGreen)"/>
+  <path d="M1035 573C1035 625 752 633 706 582" fill="none" stroke="#8da2c2" stroke-width="2" stroke-dasharray="5 6" marker-end="url(#arrowViolet)"/>
   <text x="370" y="385" class="mono edgeLabel">BUILD INDEX</text>
-  <text x="612" y="388" class="mono edgeLabel">TASK</text>
+  <text x="710" y="386" class="mono edgeLabel">TASK</text>
   <text x="612" y="431" class="mono edgeLabel">INDEX</text>
   <text x="765" y="526" class="mono edgeLabel">SYMLINK</text>
   <text x="850" y="650" class="mono edgeLabel">RECONCILE ON NEXT TASK</text>
 
   <!-- Stage 1: Vault -->
-  <rect x="45" y="198" width="330" height="408" rx="14" class="zone"/>
+  <rect x="45" y="198" width="330" height="408" rx="14" class="zone" style="fill:none"/>
   <text x="68" y="229" class="mono num">01 / STORAGE LAYER</text>
   <text x="68" y="255" class="sans zoneTitle">READ-ONLY SKILL VAULT</text>
   <text x="68" y="275" class="mono zoneMeta">PERSISTENT LIBRARY · NEVER MUTATED</text>
@@ -62,7 +67,7 @@
   <text x="84" y="564" class="sans small">names · descriptions · keywords · fields</text>
 
   <!-- Stage 2: engine -->
-  <rect x="442" y="198" width="313" height="408" rx="14" class="zone"/>
+  <rect x="442" y="198" width="313" height="408" rx="14" class="zone" style="fill:none"/>
   <text x="465" y="229" class="mono num">02 / CONTROL PLANE</text>
   <text x="465" y="255" class="sans zoneTitle">ROUTING ENGINE</text>
   <text x="465" y="275" class="mono zoneMeta">DETERMINISTIC · ATOMIC · REVERSIBLE</text>
@@ -80,7 +85,7 @@
   <text x="465" y="594" class="mono tiny">CONFIG: LIMITS · ALWAYS-KEEP · PATHS</text>
 
   <!-- Stage 3: active context -->
-  <rect x="822" y="198" width="333" height="408" rx="14" class="zone"/>
+  <rect x="822" y="198" width="333" height="408" rx="14" class="zone" style="fill:none"/>
   <text x="845" y="229" class="mono num">03 / RUNTIME CONTEXT</text>
   <text x="845" y="255" class="sans zoneTitle">ACTIVE SKILLS DIRECTORY</text>
   <text x="845" y="275" class="mono zoneMeta">THE AGENT READS ONLY THIS SET</text>
