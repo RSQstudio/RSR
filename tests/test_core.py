@@ -131,6 +131,30 @@ class CoreSafetyTests(unittest.TestCase):
             self.assertEqual(result["moved"], ["demo"])
             self.assertTrue((vault / "_inbox" / "demo" / "SKILL.md").is_file())
 
+    def test_sweep_does_not_vault_always_on_real_skill(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            active = root / "active"
+            vault = root / "vault"
+            self._skill(active, "caveman")
+            self._skill(active, "demo")
+            (vault / "_inbox").mkdir(parents=True)
+            config = {
+                "paths": {
+                    "active": str(active),
+                    "vault": str(vault),
+                    "index_cache": str(root / "cache" / "index.json"),
+                },
+                "always_keep": ["caveman"],
+            }
+
+            result = cron.sweep(config)
+
+            self.assertEqual(result["errors"], [])
+            self.assertEqual(result["moved"], ["demo"])
+            self.assertTrue((active / "caveman" / "SKILL.md").is_file())
+            self.assertTrue((vault / "_inbox" / "demo" / "SKILL.md").is_file())
+
 
 class AgentDetectorTests(unittest.TestCase):
     def test_list_agents_does_not_retain_stale_global_state(self) -> None:

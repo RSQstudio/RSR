@@ -99,7 +99,9 @@ def sweep(config: dict[str, Any] | None = None, dry_run: bool = False) -> dict[s
         result["errors"].append(f"Active dir not found: {active}")
         return result
 
-    # Find real skill dirs (not symlinks, not .hidden) containing SKILL.md
+    # Real skills named in always_keep are user-selected persistent skills.
+    # They remain directories in active/ and must never be swept into the vault.
+    always_keep = set(config.get("always_keep", []))
     inbox = vault / "_inbox"
 
     for entry in sorted(active.iterdir()):
@@ -109,7 +111,7 @@ def sweep(config: dict[str, Any] | None = None, dry_run: bool = False) -> dict[s
             continue  # Router-managed, skip
 
         skill_md = entry / "SKILL.md"
-        if not skill_md.is_file():
+        if not skill_md.is_file() or entry.name in always_keep:
             continue
 
         result["found"] += 1
