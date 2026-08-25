@@ -1,48 +1,38 @@
 # RSQ Skill Router
 
-> Keep the full skill library on disk. Give the agent the small set it needs for the task in front of it.
+**Intelligent skill loading for AI agents.**
 
-RSQ Skill Router is a local Python CLI for agents that use `SKILL.md`-style skills. It indexes a read-only vault, matches a task against that index, and maintains an active skills directory with symlinks.
+> Keep the whole library. Load only the skills the current task needs.
 
-The agent reads the active directory. The full library stays out of its working context until it is relevant.
+Skills are cheap to collect and expensive to leave loaded forever.
 
-**What it does**
+A single serious agent user can accumulate **80–100 skills** over time. A fleet can carry **600–700** across its agents and fields. Many runtimes place every installed skill's name and description into the initial context. At 100 skills, that can cost roughly **8,000–12,000 tokens** before the agent receives its first task. At 600–700 skills, it becomes **60,000+ tokens** of startup context.
 
-- indexes `SKILL.md` metadata from a vault
-- routes a task to a bounded set of matching skills
-- activates and deactivates symlinks in the active skills directory
-- protects selected always-on skills
-- records routing activity for local maintenance reports
+The exact number depends on the runtime and the size of each skill description. The problem is still linear: every useful skill makes every unrelated task more expensive.
 
-RSQ Skill Router is not a hosted service, an LLM, or a replacement for your agent framework. It is a local control plane for a large skill library.
+RSQ Skill Router keeps the full library in a vault, indexes it locally, and exposes a small task-selected set through symlinks. The agent sees the active directory. The library stays available without staying loaded.
 
 ![Vault to active context](diagrams/vault-architecture.svg)
 
-## The operating model
-
-A skill library has two locations:
-
-| Location | Purpose | What the router may change |
-|---|---|---|
-| **Vault** | The complete source library | Nothing during normal routing |
-| **Active directory** | The skills the agent can load now | Symlinks only |
-
-The installer moves existing real skill folders into the vault once. After that, normal routing creates or removes only symlinks in the active directory.
-
-![Component map](diagrams/component-architecture.svg)
-
 ## Install
 
-### Requirements
+### Recommended: bootstrap installer
 
-- Python 3.10 or newer
-- Git
-- At least one directory containing `SKILL.md` skills
-- GitHub access to this repository while it remains private
+```bash
+curl -sSL https://raw.githubusercontent.com/RED-NTWRK/RSR/main/install.sh | bash
+```
 
-### Install from source
+The bootstrap installer:
 
-This is the most transparent path.
+1. clones RSR to `~/.rsq-skill-router/`
+2. creates the `skill-router` command in `~/.local/bin/`
+3. detects your agent and its skills directory
+4. lets you choose skills that must stay active
+5. moves the rest of the library into a vault and builds the first index
+
+It needs Python 3.10+, Git, and repository access while RSR remains private.
+
+### Alternative: install from source
 
 ```bash
 git clone https://github.com/RED-NTWRK/RSR.git ~/.rsq-skill-router
@@ -51,86 +41,111 @@ python3 -m pip install .
 skill-router install
 ```
 
-The installer detects a supported agent, asks which skills must remain active, moves the remaining real skill folders into a vault, and builds the first index.
+## What changes after install
 
-### Bootstrap installer
+The router splits the library into two locations:
 
-The repository also includes a bootstrap script. It clones the repository into `~/.rsq-skill-router`, creates `~/.local/bin/skill-router`, and starts the setup wizard.
+| Location | Purpose |
+|---|---|
+| **Vault** | Every routable skill. This is the source library. |
+| **Active directory** | The small set your agent can load for the current task. |
+
+The installer makes the first move from active directory to vault. After that, routing only creates or removes symlinks in the active directory.
+
+![Component map](diagrams/component-architecture.svg)
+
+## Use it
+
+The core workflow has three commands:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/RED-NTWRK/RSR/main/install.sh | bash
-```
-
-Review `install.sh` before using it in a managed environment. It changes local skill locations and may add `~/.local/bin` to your shell startup file.
-
-## First task
-
-After installation, inspect the state and test routing without changing the active set:
-
-```bash
+# Inspect the current library and active set
 skill-router status
+
+# See matches without touching the filesystem
 skill-router route "write a cold email sequence for enterprise prospects"
-```
 
-Activate the selected skills for a real task:
-
-```bash
+# Match the task, activate the new set, remove stale links
 skill-router reconcile "write a cold email sequence for enterprise prospects"
 ```
 
-If the index does not exist yet, build it first:
+If the router has no index yet, build one first:
 
 ```bash
 skill-router index
 ```
 
-`reconcile` matches the task, activates the new symlinks, then removes stale symlinks. It activates before it deactivates.
+A typical route result looks like this:
 
-## Agent integration
+```text
+Top field: sales
+Found in: sales, copywriting
+Skills: 5
 
-Installation prepares the vault, index, configuration, and CLI. It does **not** install a native pre-turn hook into every agent framework.
+  [sales]
+    0.872  cold-email
+    0.741  outbound-engine
 
-For a compatible agent to route automatically, make this repository's `SKILL.md` available in that agent's active skill directory. For Hermes Agent:
+  [copywriting]
+    0.795  email-writing-frameworks
+    0.712  subject-lines
+```
+
+Scores and names come from your own vault. The router never needs a remote API call to produce them.
+
+## Make routing automatic
+
+The router works best when `SKILL.md` stays active alongside your communication and operating skills. A compatible agent reads its instructions, reconciles for the current task, then works with the selected set.
+
+For Hermes Agent, add the router skill after installation:
 
 ```bash
 mkdir -p ~/.hermes/skills/rsq-skill-router
 cp ~/.rsq-skill-router/SKILL.md ~/.hermes/skills/rsq-skill-router/SKILL.md
 ```
 
-`SKILL.md` instructs the agent to run `skill-router reconcile "<current task>"` before it starts work. Other frameworks can use the same file in their documented skill directory, provided `paths.active` points to that directory.
+For Claude Code, Codex, Cursor, Copilot, Windsurf, Cline, OpenClaw, Aider, Continue, and other `SKILL.md`-compatible agents, place the same file in the framework's active skills directory. The installer detects common locations; you can override the chosen path during setup or in configuration.
 
-The installer recognizes common skill locations for Hermes, Claude Code, Codex, Cursor, GitHub Copilot, Windsurf, Cline, OpenClaw, Aider, and Continue. If detection chooses the wrong directory, provide the correct path during the interactive install or set it explicitly in the configuration file.
+The agent-side behavior is simple:
+
+```text
+Task arrives
+  → router skill reads the task
+  → skill-router reconcile "<task>"
+  → matching skills become active
+  → agent works with the smaller, relevant set
+```
 
 ## Commands
 
-| Command | Effect |
+| Command | What it does |
 |---|---|
-| `skill-router install` | Runs the interactive setup wizard |
-| `skill-router index` | Rebuilds the local skill index from the vault |
-| `skill-router route "<task>"` | Shows matches without changing active skills |
+| `skill-router install` | Runs the setup wizard |
+| `skill-router index` | Builds or rebuilds the local index |
+| `skill-router route "<task>"` | Returns matches; makes no filesystem changes |
 | `skill-router route --auto "<task>"` | Routes and reconciles in one command |
-| `skill-router reconcile "<task>"` | Routes and reconciles the active set |
-| `skill-router activate <skill>...` | Activates named vault skills directly |
-| `skill-router status` | Shows vault, active, and index state |
-| `skill-router config` | Prints the current configuration and validates paths |
+| `skill-router reconcile "<task>"` | Activates matches and removes stale symlinks |
+| `skill-router activate <skill>...` | Activates specific vault skills directly |
+| `skill-router status` | Shows vault, active skills, and index state |
+| `skill-router config` | Prints configuration and validates paths |
 | `skill-router cron sweep --dry-run` | Previews the maintenance sweep |
-| `skill-router cron setup` | Adds the sweep and report jobs to the user crontab |
-| `skill-router cron report` | Prints a usage report from the local log |
+| `skill-router cron setup` | Installs the sweep and report jobs in the user crontab |
+| `skill-router cron report` | Prints local routing activity for the selected period |
 
-## How matching works
+## How routing works
 
 The default matcher is deterministic and local.
 
 1. It identifies likely fields from task keywords.
 2. It scores skills in those fields using normalized keyword overlap.
-3. A name match weighs 3×, indexed keywords weigh 2×, and description text weighs 1×.
-4. It returns the highest-scoring skills above the configured threshold, capped at the configured maximum.
+3. A skill-name match weighs 3×, indexed keywords weigh 2×, and description text weighs 1×.
+4. It returns results above the confidence threshold, capped at the active-skills limit.
 
-This is deliberately simple. It is inspectable, cheap to run, and gives you a clean place to add semantic matching later if the keyword index stops being sufficient.
+The default is intentional: no embeddings to host, no request latency, and no opaque ranking path. Semantic matching belongs behind a low-confidence fallback, not in the critical path.
 
 ## Configuration
 
-The installer writes its configuration to `~/.config/skill-router/config.yaml`. A minimal configuration looks like this:
+The installer writes `~/.config/skill-router/config.yaml`.
 
 ```yaml
 paths:
@@ -152,15 +167,15 @@ logging:
   json_format: true
 ```
 
-Use `auto` paths when the installer should resolve the active and vault directories from the detected agent. Set explicit absolute paths when you manage several agents or profiles on the same machine.
+Use `auto` when one agent owns the machine. Set explicit paths when you operate several agents, profiles, or skill libraries on the same host.
 
-## Safety boundaries
+## Safety model
 
-- The vault is the source of truth. Normal routing does not modify or delete vault skills.
-- The router removes only symlinks that it owns in the active directory. It refuses to delete a real active skill folder.
-- Skills in `always_keep` are not deactivated during reconciliation.
-- Reconciliation adds required links before removing stale ones.
-- `cron sweep` is state-changing because it can move newly added real skills from the active directory into the vault. Run it with `--dry-run` before enabling it in an unfamiliar environment.
+- **Vault stays intact during normal routing.** The router does not modify or delete vault skills.
+- **Active changes are symlink-only.** It refuses to delete a real folder in the active directory.
+- **Always-on skills are protected.** Anything in `always_keep` survives reconciliation.
+- **Reconciliation adds before it removes.** The next task's skills are linked before stale ones are removed.
+- **Maintenance is explicit.** `cron sweep` can move newly added real skill folders into the vault. Run `skill-router cron sweep --dry-run` before enabling it on an existing installation.
 
 ## Repository layout
 
@@ -182,8 +197,6 @@ RSR/
 
 ## Development
 
-Run the CLI directly from a source checkout:
-
 ```bash
 python3 src/skill_router_cli.py --help
 python3 -m compileall -q src
@@ -191,9 +204,9 @@ python3 -m compileall -q src
 
 ## Roadmap
 
-- semantic matching for low-confidence keyword results
+- semantic fallback for low-confidence keyword results
 - usage-aware ranking and deactivation policy
-- framework-native lifecycle hooks where the target framework supports them
+- framework-native lifecycle hooks where a target supports them
 
 ## License
 
