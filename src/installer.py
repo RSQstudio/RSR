@@ -82,6 +82,42 @@ def _find_skills(directory: Path, ignore_symlinks: bool = True) -> list[tuple[st
     return results
 
 
+def _router_skill_source() -> Path:
+    """Find router instructions from a source or bootstrap installation."""
+    candidates = (
+        Path(__file__).resolve().parent.parent / "SKILL.md",
+        Path.home() / ".rsq-skill-router" / "SKILL.md",
+        Path.cwd() / "SKILL.md",
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError("RSQ Skill Router SKILL.md was not found")
+
+
+def install_router_skill(source: Path, active_dir: Path) -> Path:
+    """Install router instructions without replacing a user-managed copy."""
+    destination = active_dir / "rsq-skill-router" / "SKILL.md"
+    if destination.exists():
+        return destination
+    if destination.parent.is_symlink():
+        raise RuntimeError(f"Refusing to write through symlinked router path: {destination.parent}")
+
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, destination)
+    return destination
+
+
+def choose_router_skill_installation(non_interactive: bool) -> bool:
+    """Ask whether the router itself should remain available to the agent."""
+    if non_interactive:
+        return True
+    return _yesno(
+        "Install RSQ Skill Router as an always-on agent skill?",
+        default=True,
+    )
+
+
 # ── Main install wizard ──────────────────────────────────
 
 def run_install(
@@ -106,7 +142,7 @@ def run_install(
     print("    3. Pick skills to ALWAYS keep active")
     print("    4. Move the rest into a read-only vault")
     print("    5. Build a searchable index")
-    print("    6. Activate skills on-demand based on your tasks")
+    print("    6. Install the router instructions in your active skills directory")
     print()
 
     if not non_interactive:
@@ -209,6 +245,12 @@ def run_install(
             always_keep = []
             print(f"\n  No skills marked as always-on.")
 
+    install_router = choose_router_skill_installation(non_interactive)
+    if install_router:
+        print("  Router instructions will stay active for task routing.")
+    else:
+        print("  Router instructions will not be installed.")
+
     # ── Step 4: Confirm & execute ──
     to_move = [(name, path) for name, path, _ in all_skills if name not in always_keep]
     to_keep = [(name, path) for name, path, _ in all_skills if name in always_keep]
@@ -217,6 +259,7 @@ def run_install(
     print(f"\n  Skills directory: {chosen_skills_dir}")
     print(f"  Vault directory:   {chosen_vault_dir}")
     print(f"  Always-on:         {len(to_keep)}")
+    print(f"  Router skill:      {'install in active/' if install_router else 'skipped'}")
     for name, _ in to_keep:
         print(f"    🔒 {name}")
     print(f"  Moving to vault:   {len(to_move)}")
@@ -231,6 +274,12 @@ def run_install(
         chosen_vault_dir.mkdir(parents=True, exist_ok=True)
         index = build_index(chosen_vault_dir, Path(config["paths"]["index_cache"]).expanduser())
         print(f"  Index: {index['total_skills']} skills across {len(index['fields'])} fields")
+        if install_router:
+            try:
+                destination = install_router_skill(_router_skill_source(), chosen_skills_dir)
+                print(f"  Router skill: {destination}")
+            except (FileNotFoundError, RuntimeError) as exc:
+                print(f"  ⚠️  Router skill was not installed: {exc}")
         return
 
     if non_interactive:
@@ -278,7 +327,15 @@ def run_install(
         if result.get("not_found"):
             print(f"  ⚠️  Not found in vault: {', '.join(result['not_found'])}")
 
-    # ── Step 8: Success ──
+    if install_router:
+        _step(8, "Installing router instructions...")
+        try:
+            destination = install_router_skill(_router_skill_source(), chosen_skills_dir)
+            print(f"  ✓ Router skill ready: {destination}")
+        except (FileNotFoundError, RuntimeError) as exc:
+            print(f"  ⚠️  Router skill was not installed: {exc}")
+
+    # ── Step 9: Success ──
     _header("🎉  INSTALL COMPLETE")
     print(f"""
   What just happened:

@@ -95,16 +95,28 @@ Scores and names come from your own vault. The router never needs a remote API c
 
 ## Make routing automatic
 
-The router works best when `SKILL.md` stays active alongside your communication and operating skills. A compatible agent reads its instructions, reconciles for the current task, then works with the selected set.
+The setup wizard now asks whether to install `rsq-skill-router` as an always-on agent skill. The default is **yes**:
 
-For Hermes Agent, add the router skill after installation:
+```text
+Install RSQ Skill Router as an always-on agent skill? [Y/n]
+```
+
+When accepted, it copies the repository's `SKILL.md` to:
+
+```text
+<active-skills-directory>/rsq-skill-router/SKILL.md
+```
+
+That file tells a compatible agent to reconcile before it works on a task. `skill-router install --yes` accepts this default in non-interactive environments.
+
+If you skipped it during setup, install it manually. For Hermes Agent:
 
 ```bash
 mkdir -p ~/.hermes/skills/rsq-skill-router
 cp ~/.rsq-skill-router/SKILL.md ~/.hermes/skills/rsq-skill-router/SKILL.md
 ```
 
-For Claude Code, Codex, Cursor, Copilot, Windsurf, Cline, OpenClaw, Aider, Continue, and other `SKILL.md`-compatible agents, place the same file in the framework's active skills directory. The installer detects common locations; you can override the chosen path during setup or in configuration.
+For Claude Code, Codex, Cursor, Copilot, Windsurf, Cline, OpenClaw, Aider, Continue, and other `SKILL.md`-compatible agents, the wizard targets the selected active skills directory. You can override that directory during setup or in configuration.
 
 The agent-side behavior is simple:
 
