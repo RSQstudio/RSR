@@ -15,74 +15,25 @@ from src.installer import (
 
 
 class InstallRouterSkillTests(unittest.TestCase):
-    def test_prefers_direct_anti_slop_over_meta_unslop(self) -> None:
+    def test_always_on_defaults_are_empty(self) -> None:
         selected, missing = recommended_always_keep(
             ["caveman", "anti-slop", "un-slop", "other-skill"],
             {
-                "un-slop": "Analyze a domain and generate a reusable skill file.",
-                "anti-slop": "Self-correction for all prose output before delivering.",
+                "anti-slop": "Self-correction for all prose output before delivery.",
+                "caveman": "Concise, low-overhead agent responses.",
             },
         )
-
-        self.assertEqual(selected, ["caveman", "anti-slop"])
-        self.assertEqual(missing, [])
-
-    def test_prefers_anti_slop_when_both_skills_are_available(self) -> None:
-        selected, missing = recommended_always_keep(
-            ["caveman", "anti-slop", "un-slop"],
-            {
-                "un-slop": "Writing and editing output.",
-                "anti-slop": "Writing and editing output.",
-            },
-        )
-
-        self.assertEqual(selected, ["caveman", "anti-slop"])
-        self.assertEqual(missing, [])
-
-    def test_preselects_anti_slop_when_installed(self) -> None:
-        selected, missing = recommended_always_keep(
-            ["caveman", "anti-slop"],
-            {"anti-slop": "Analyze a domain and generate a reusable skill file."},
-        )
-
-        self.assertEqual(selected, ["caveman", "anti-slop"])
-        self.assertEqual(missing, [])
-
-    def test_recommends_anti_slop_when_only_unslop_is_available(self) -> None:
-        selected, missing = recommended_always_keep(
-            ["caveman", "un-slop"],
-            {"un-slop": "Analyze a domain and generate a reusable skill file."},
-        )
-
-        self.assertEqual(selected, ["caveman"])
-        self.assertEqual(missing, ["anti-slop"])
-
-    def test_uses_direct_anti_slop_when_un_slop_is_not_available(self) -> None:
-        selected, missing = recommended_always_keep(
-            ["caveman", "anti-slop"],
-            {"anti-slop": "Self-correction for all prose output before delivering."},
-        )
-
-        self.assertEqual(selected, ["caveman", "anti-slop"])
-        self.assertEqual(missing, [])
-
-    def test_suggests_beneficial_skills_when_missing(self) -> None:
-        selected, missing = recommended_always_keep(["other-skill"])
 
         self.assertEqual(selected, [])
-        self.assertEqual(missing, ["caveman", "anti-slop"])
+        self.assertEqual(missing, [])
 
-    def test_keeps_configured_extras_without_duplicate_anti_slop_skill(self) -> None:
+    def test_configured_always_keep_uses_only_explicit_available_choices(self) -> None:
         selected = configured_always_keep(
             ["caveman", "anti-slop", "un-slop", "caveman-help"],
-            ["caveman", "un-slop", "anti-slop", "caveman-help"],
-            {
-                "un-slop": "Analyze a domain and generate a reusable skill file.",
-                "anti-slop": "Self-correction for all prose output before delivering.",
-            },
+            ["caveman", "anti-slop", "un-slop", "missing-skill"],
         )
 
-        self.assertEqual(selected, ["caveman", "anti-slop", "caveman-help"])
+        self.assertEqual(selected, ["caveman", "anti-slop", "un-slop"])
 
     def test_copies_router_skill_to_active_directory(self) -> None:
         with TemporaryDirectory() as tmp:
@@ -111,17 +62,20 @@ class InstallRouterSkillTests(unittest.TestCase):
             self.assertEqual(returned, destination)
             self.assertEqual(destination.read_text(encoding="utf-8"), "custom router instructions\n")
 
-    def test_prompts_to_install_router_skill_by_default(self) -> None:
+    def test_router_skill_installation_is_opt_in(self) -> None:
         with patch("src.installer._yesno", return_value=False) as ask:
             install = choose_router_skill_installation(non_interactive=False)
 
         self.assertFalse(install)
         ask.assert_called_once_with(
-            "Install RSQ Skill Router as an always-on agent skill?",
-            default=True,
+            "Install RSQ Skill Router instructions in the active skills directory?",
+            default=False,
         )
 
-    def test_interactive_wizard_keeps_direct_anti_slop_default(self) -> None:
+    def test_noninteractive_mode_skips_router_skill_installation(self) -> None:
+        self.assertFalse(choose_router_skill_installation(non_interactive=True))
+
+    def test_interactive_wizard_requires_explicit_always_on_and_router_choices(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             active = root / "active"
@@ -151,7 +105,7 @@ class InstallRouterSkillTests(unittest.TestCase):
                 "index": {},
                 "logging": {},
             }
-            responses = ["", str(active), str(vault), "", "y", "y", "n"]
+            responses = ["", str(active), str(vault), "", "n", "y", "n"]
 
             with patch.dict(os.environ, {"HOME": str(root)}), patch.object(
                 installer.agent_detector, "detect_agent", return_value=detected
@@ -160,13 +114,16 @@ class InstallRouterSkillTests(unittest.TestCase):
             ):
                 installer.run_install(config)
 
-            self.assertTrue((active / "caveman" / "SKILL.md").is_file())
-            self.assertTrue((active / "anti-slop" / "SKILL.md").is_file())
+            self.assertFalse((active / "caveman" / "SKILL.md").exists())
+            self.assertFalse((active / "anti-slop" / "SKILL.md").exists())
+            self.assertFalse((active / "rsq-skill-router" / "SKILL.md").exists())
+            self.assertTrue((vault / "_inbox" / "caveman" / "SKILL.md").is_file())
+            self.assertTrue((vault / "_inbox" / "anti-slop" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "un-slop" / "SKILL.md").is_file())
             written_config = json.loads((root / ".config" / "skill-router" / "config.json").read_text(encoding="utf-8"))
-            self.assertEqual(written_config["always_keep"], ["caveman", "anti-slop"])
+            self.assertEqual(written_config["always_keep"], [])
 
-    def test_noninteractive_wizard_installs_router_skill(self) -> None:
+    def test_noninteractive_wizard_does_not_install_optional_skills(self) -> None:
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             active = root / "active"
@@ -200,15 +157,15 @@ class InstallRouterSkillTests(unittest.TestCase):
                 installer.run_install(config, non_interactive=True)
 
             destination = active / "rsq-skill-router" / "SKILL.md"
-            self.assertTrue(destination.is_file())
-            self.assertEqual(destination.read_text(encoding="utf-8"), (Path.cwd() / "SKILL.md").read_text(encoding="utf-8"))
-            self.assertTrue((active / "caveman" / "SKILL.md").is_file())
+            self.assertFalse(destination.exists())
+            self.assertFalse((active / "caveman" / "SKILL.md").exists())
+            self.assertTrue((vault / "_inbox" / "caveman" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "un-slop" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "demo-skill" / "SKILL.md").is_file())
             config_path = root / ".config" / "skill-router" / "config.json"
             written_config = json.loads(config_path.read_text(encoding="utf-8"))
             self.assertEqual(config_path.stat().st_mode & 0o777, 0o600)
-            self.assertEqual(written_config["always_keep"], ["caveman"])
+            self.assertEqual(written_config["always_keep"], [])
 
 
 if __name__ == "__main__":
