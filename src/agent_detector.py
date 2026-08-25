@@ -12,9 +12,9 @@ Usage:
 
 from __future__ import annotations
 
+import shutil
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-import shutil
 
 
 @dataclass
