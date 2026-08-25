@@ -1,0 +1,48 @@
+# Skill Router Configuration
+# Default settings. Copy to ~/.config/skill-router/config.yaml and customize.
+
+# ── Paths ──
+paths:
+  vault: "~/.hermes/skills-vault"      # Where ALL skills live (never modified by router)
+  active: "~/.hermes/skills"           # Where agent loads skills FROM (router manages symlinks here)
+  index_cache: "~/.cache/skill-router/index.json"  # Pre-computed skill index
+
+# ── Matching Strategy ──
+matching:
+  strategy: "keyword"           # "keyword" | "semantic" | "hybrid"
+  max_active_skills: 15         # Hard cap on how many skills in active/
+  min_confidence: 0.3           # Minimum match score to consider a skill (0.0-1.0)
+  multi_field: true             # Allow skills from multiple fields
+
+# ── Always-Keep Skills ──
+# These are NEVER deactivated. Always in active/ alongside routed skills.
+always_keep:
+  - caveman
+  - caveman-help
+  - caveman-commit
+  - caveman-review
+  - caveman-stats
+  - un-slop
+  - anti-slop
+  - rsq-skill-router           # The router itself — so agent always has routing instructions
+
+# ── Index Build ──
+index:
+  auto_rebuild: "on_change"     # "on_change" | "on_session_start" | "manual"
+  rebuild_cooldown: 300         # Seconds between index rebuilds
+  extract_fields:               # What to extract from SKILL.md
+    - name                      # From YAML frontmatter: name
+    - description               # From YAML frontmatter: description
+    - body_keywords             # Top N keywords from SKILL.md body
+
+# ── Logging ──
+logging:
+  level: "info"                 # debug | info | warning | error
+  file: "~/.cache/skill-router/router.log"
+  json_format: true             # JSON lines for machine readability
+
+# ── Hermes Integration ──
+hermes:
+  auto_route: true              # If true, router runs before every agent turn
+  pre_turn_hook: true           # Use Hermes pre-turn hook
+  deactivate_after: 3           # Deactivate skills after N turns of non-use

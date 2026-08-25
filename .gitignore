@@ -1,0 +1,12 @@
+# RSQ Skill Router
+__pycache__/
+*.pyc
+*.pyo
+.env
+.cache/
+~/.cache/skill-router/
+*.jsonl
+.DS_Store
+*.swp
+*.swo
+*~
