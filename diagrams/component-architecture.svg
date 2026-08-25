@@ -1,5 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 540">
 
+  <!-- Background -->
+  <rect width="980" height="540" fill="#0f172a"/>
+
+  <style>
+    .node.storage { fill: #0f766e; }
+    .node.process { fill: #4338ca; }
+    .node.input { fill: #1d4ed8; }
+    .node.external { fill: #92400e; }
+    .node.neutral { fill: #334155; }
+    .node.risk { fill: #991b1b; }
+    .zone { fill: #1e293b; stroke: #334155; stroke-width: 1; }
+    .edge { stroke: #94a3b8; fill: none; }
+    .label { fill: #e5e7eb; font-family: system-ui, sans-serif; font-size: 14px; }
+    .small { fill: #a3adbd; font-family: system-ui, sans-serif; font-size: 11px; }
+    .title { fill: #e5e7eb; font-family: system-ui, sans-serif; font-size: 18px; font-weight: bold; }
+  </style>
+
   <defs>
     <marker id="a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#94a3b8"/></marker>
   </defs>
