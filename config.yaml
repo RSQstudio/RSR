@@ -16,14 +16,9 @@ matching:
 
 # ── Always-Keep Skills ──
 # These are NEVER deactivated. Always in active/ alongside routed skills.
+# The installer evaluates available anti-slop skills and keeps at most one direct-output skill.
 always_keep:
   - caveman
-  - caveman-help
-  - caveman-commit
-  - caveman-review
-  - caveman-stats
-  - un-slop
-  - anti-slop
   - rsq-skill-router           # The router itself — so agent always has routing instructions
 
 # ── Index Build ──

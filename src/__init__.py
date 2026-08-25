@@ -7,6 +7,6 @@ Packages:
     skill_router_cli — CLI entry point
 """
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 __author__ = "RSQ"
 __license__ = "MIT"

@@ -32,6 +32,8 @@ The bootstrap installer:
 
 It needs Python 3.10+, Git, and repository access while RSR remains private.
 
+The installer preselects `caveman` and, when available, one direct-output anti-slop skill. It reads each candidate’s metadata rather than trusting the name: a self-correction skill is eligible; a meta-skill that generates another skill is not. It never selects both `un-slop` and `anti-slop`. If neither is present—or both are equally suitable—the wizard explains the benefit and asks the user to choose rather than guessing.
+
 ### Alternative: install from source
 
 ```bash

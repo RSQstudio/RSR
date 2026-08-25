@@ -18,7 +18,6 @@ from typing import Any
 
 from . import agent_detector
 from .indexer import build_index
-from .vault_manager import activate_skills
 
 
 # ── Helper: pretty printing ───────────────────────────────
@@ -48,6 +47,74 @@ def _yesno(prompt: str, default: bool = True) -> bool:
     if not result:
         return default
     return result in ("y", "yes")
+
+
+ANTI_SLOP_ALIASES = ("un-slop", "unslop", "anti-slop", "antislop")
+
+
+def _anti_slop_score(description: str) -> int:
+    """Score whether an anti-slop skill is safe to keep active for every task."""
+    text = description.lower()
+    score = 0
+    for phrase in ("self-correction", "automatically", "all prose", "all output", "before delivering", "writing", "editing"):
+        if phrase in text:
+            score += 2
+    for phrase in ("generate a reusable skill", "analyze a domain", "domain-specific profile", "clone", "run the repo", "install"):
+        if phrase in text:
+            score -= 4
+    return score
+
+
+def recommended_always_keep(
+    available_skills: list[str],
+    descriptions: dict[str, str] | None = None,
+) -> tuple[list[str], list[str]]:
+    """Choose useful defaults from metadata; never choose two overlapping anti-slop skills."""
+    available = set(available_skills)
+    descriptions = descriptions or {}
+    selected: list[str] = []
+    missing: list[str] = []
+
+    if "caveman" in available:
+        selected.append("caveman")
+    else:
+        missing.append("caveman")
+
+    anti_slop_candidates = [name for name in ANTI_SLOP_ALIASES if name in available]
+    if anti_slop_candidates:
+        scores = {
+            name: _anti_slop_score(descriptions.get(name, ""))
+            for name in anti_slop_candidates
+        }
+        best_score = max(scores.values())
+        best = [name for name, score in scores.items() if score == best_score]
+        if best_score > 0 and len(best) == 1:
+            selected.append(best[0])
+        elif len(anti_slop_candidates) == 1:
+            missing.append("a direct anti-slop skill")
+        else:
+            missing.append(f"choose one anti-slop skill manually ({', '.join(anti_slop_candidates)})")
+    else:
+        missing.append("un-slop or anti-slop")
+
+    return selected, missing
+
+
+def configured_always_keep(
+    available_skills: list[str],
+    configured_skills: list[str],
+    descriptions: dict[str, str] | None = None,
+) -> list[str]:
+    """Merge recommendations with user configuration, keeping one anti-slop skill."""
+    selected, _ = recommended_always_keep(available_skills, descriptions)
+    available = set(available_skills)
+
+    for name in configured_skills:
+        if name not in available or name in selected or name in ANTI_SLOP_ALIASES:
+            continue
+        selected.append(name)
+
+    return selected
 
 
 def _find_skills(directory: Path, ignore_symlinks: bool = True) -> list[tuple[str, Path, str]]:
@@ -207,25 +274,49 @@ def run_install(
         snip = f" — {snippet[:60]}..." if snippet and len(snippet) > 60 else (f" — {snippet}" if snippet else "")
         print(f"    {i:3}. {name}{snip}")
 
+    available_skills = [name for name, _, _ in all_skills]
+    skill_descriptions = {name: snippet for name, _, snippet in all_skills}
+    recommended_keep, missing_recommendations = recommended_always_keep(
+        available_skills,
+        skill_descriptions,
+    )
+
     # ── Step 3: Choose always-keep ──
     _step(3, "PICK YOUR ALWAYS-ON SKILLS")
     print()
     print("  These skills stay active 100% of the time — they are NEVER")
     print("  deactivated by the router, no matter what task you're doing.")
     print()
-    print("  Common choices:")
-    print("    • Communication helpers (caveman, un-slop, anti-slop)")
+    print("  Recommended defaults:")
+    if recommended_keep:
+        print(f"    • {', '.join(recommended_keep)}")
+    if missing_recommendations:
+        print("  Recommended when available:")
+        for name in missing_recommendations:
+            if name == "caveman":
+                print("    • caveman — concise, low-overhead agent responses")
+            elif name.startswith("choose one anti-slop skill manually"):
+                print(f"    • {name}")
+            elif name == "a direct anti-slop skill":
+                print("    • a direct anti-slop skill — avoid meta-skills that only generate another skill")
+            else:
+                print("    • un-slop or anti-slop — cleaner, less generic output")
+    print("  Other common choices:")
     print("    • The router itself (rsq-skill-router)")
     print("    • Essential tooling (caveman-help, caveman-commit)")
     print()
 
     if non_interactive:
-        always_keep = config.get("always_keep", [])
-        print(f"  Non-interactive mode — using config defaults: {', '.join(always_keep)}")
+        always_keep = configured_always_keep(
+            available_skills,
+            config.get("always_keep", []),
+            skill_descriptions,
+        )
+        print(f"  Non-interactive mode — selected: {', '.join(always_keep) or 'none'}")
     else:
         # Build a numbered menu
-        print("  Enter skill numbers (comma-separated, e.g. '1,3,7') to mark as always-on.")
-        print("  Press Enter to accept none, or type 'all' for everything.")
+        print("  Enter skill numbers (comma-separated, e.g. '1,3,7') to replace the defaults.")
+        print(f"  Press Enter to keep: {', '.join(recommended_keep) or 'none'}. Type 'all' for everything.")
         print()
 
         choice = _input("  Always-on skills", "")
@@ -242,8 +333,8 @@ def run_install(
                 always_keep = []
                 print("\n  ⚠️  Invalid input. No skills marked as always-on.")
         else:
-            always_keep = []
-            print(f"\n  No skills marked as always-on.")
+            always_keep = recommended_keep
+            print(f"\n  ✓ Kept recommended always-on skills: {', '.join(always_keep) or 'none'}")
 
     install_router = choose_router_skill_installation(non_interactive)
     if install_router:
@@ -318,14 +409,10 @@ def run_install(
     index = build_index(chosen_vault_dir, cache)
     print(f"\n  ✓ Index built: {index['total_skills']} skills across {len(index['fields'])} fields")
 
-    # ── Step 7: Activate always-keep ──
+    # ── Step 7: Confirm always-on skills ──
     if to_keep:
-        _step(7, "Activating always-on skills...")
-        result = activate_skills(chosen_vault_dir, chosen_skills_dir, [n for n, _ in to_keep])
-        if result["activated"]:
-            print(f"\n  ✓ Activated: {', '.join(result['activated'])}")
-        if result.get("not_found"):
-            print(f"  ⚠️  Not found in vault: {', '.join(result['not_found'])}")
+        _step(7, "Keeping always-on skills active...")
+        print(f"  ✓ Kept in active/: {', '.join(name for name, _ in to_keep)}")
 
     if install_router:
         _step(8, "Installing router instructions...")
