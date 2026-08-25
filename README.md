@@ -1,21 +1,18 @@
-# Skill Router
+# RSQ Skill Router
 
 **Intelligent skill loading for AI coding agents.** Keep your agent fast. 600 skills in the vault, only 5–15 in active memory.
 
-An AI agent with 100 skills loaded burns ~10,000 tokens before the first prompt. At 600 skills, that's 60,000 tokens — half a context window. **Skill Router solves this** by keeping all skills in a vault and activating only the ones relevant to the current task.
+An AI agent with 100 skills loaded burns ~10,000 tokens before the first prompt. At 600 skills, that's 60,000 tokens — half a context window. **RSQ Skill Router solves this** by keeping all skills in a read-only vault and activating only the ones relevant to the current task.
 
-```
-vault/        active/
-├── coding/       ├── caveman/          ← always keep
-│   ├── python-patterns/               
-│   ├── golang-patterns/               ← symlinked ─── golang-patterns/
-│   └── 286 more...                    
-├── consulting/                         
-│   ├── mece-framework/                 ← symlinked ─── mece-framework/
-│   └── 119 more...
-├── finance/                            
-└── ... 7 more fields                   5–15 skills total (vs 576)
-```
+![Vault Architecture](diagrams/vault-architecture.svg)
+
+*Skills live in the vault (left). The router matches user intent → activates symlinks into the agent's active directory (right). Always-on skills are protected from deactivation.*
+
+## Component Architecture
+
+![Component Architecture](diagrams/component-architecture.svg)
+
+*Eight modules, one CLI. Install once, route forever.*
 
 ## Install
 
