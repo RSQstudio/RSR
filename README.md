@@ -8,10 +8,12 @@ An AI agent with 100 skills loaded burns ~10,000 tokens before the first prompt.
 
 RSQ Skill Router uses a vault-based architecture — skills live in a read-only vault and are symlinked into the agent's active directory on demand.
 
-**[📊 View Vault Architecture Diagram](https://raw.githubusercontent.com/RED-NTWRK/RSR/main/diagrams/vault-architecture.html)**  
-*Skills live in the vault (left). The router matches user intent → activates symlinks into the agent's active directory (right). Always-on skills are protected from deactivation.*
+![Vault Architecture](diagrams/vault-architecture.svg)
 
-**[📊 View Component Architecture Diagram](https://raw.githubusercontent.com/RED-NTWRK/RSR/main/diagrams/component-architecture.html)**  
+*Skills live in the vault (left). Router matches intent → activates symlinks into active (right). Always-on protected.*
+
+![Component Architecture](diagrams/component-architecture.svg)
+
 *Eight modules, one CLI. Install once, route forever.*
 
 ## Install
