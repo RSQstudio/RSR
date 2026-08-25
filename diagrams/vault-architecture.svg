@@ -1,180 +1,143 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 440" style="background:#0a0a0f;font-family:system-ui,-apple-system,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 480">
+
+  <!-- ── EDGES (behind nodes) ── -->
   <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#9ca3af"/>
-    </marker>
-    <marker id="arrowE" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
-    </marker>
-    <marker id="arrowR" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#fb7185"/>
-    </marker>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#94a3b8"/></marker>
   </defs>
 
-  <!-- TITLE -->
-  <text x="440" y="28" text-anchor="middle" fill="#fff" font-size="15" font-weight="700">RSQ SKILL ROUTER — HOW IT WORKS</text>
-  <text x="440" y="44" text-anchor="middle" fill="#6b7280" font-size="10">intelligent skill loading · 568 skills in vault · only 5–15 active at any time</text>
+  <!-- Vault → Router (read index) -->
+  <path d="M 310,140 L 340,140" class="edge" marker-end="url(#a)"/>
 
-  <!-- ── VAULT ── -->
-  <rect x="12" y="60" width="300" height="360" rx="10" fill="#111118" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="24" y="82" fill="#a78bfa" font-size="12" font-weight="700">VAULT · READ-ONLY</text>
-  <text x="24" y="97" fill="#6b7280" font-size="9">568 skills · 10 fields · never modified by router</text>
+  <!-- Router → Active (activate) -->
+  <path d="M 640,260 L 670,260" class="edge" marker-end="url(#a)"/>
 
-  <!-- Field boxes -->
-  <rect x="24" y="112" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="36" y="128" fill="#e5e7eb" font-size="10" font-weight="600">coding/</text><text x="88" y="128" fill="#6b7280" font-size="9">288</text>
-  <text x="36" y="140" fill="#4b5563" font-size="7">python · react · docker · go…</text>
+  <!-- Active → Router (deactivate) -->
+  <path d="M 670,350 L 640,350" class="edge" stroke-dasharray="5,4" marker-end="url(#a)"/>
 
-  <rect x="165" y="112" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="177" y="128" fill="#e5e7eb" font-size="10" font-weight="600">consulting/</text><text x="258" y="128" fill="#6b7280" font-size="9">120</text>
-  <text x="177" y="140" fill="#4b5563" font-size="7">MECE · M&amp;A · strategy…</text>
+  <!-- User → Router -->
+  <path d="M 420,68 L 420,100" class="edge" marker-end="url(#a)"/>
 
-  <rect x="24" y="154" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="36" y="170" fill="#e5e7eb" font-size="10" font-weight="600">finance/</text><text x="88" y="170" fill="#6b7280" font-size="9">37</text>
-  <text x="36" y="182" fill="#4b5563" font-size="7">P&amp;L · CFO · tax · runway…</text>
+  <!-- ── ZONES ── -->
+  <rect x="20" y="90" width="300" height="370" rx="8" class="zone"/>
+  <text x="32" y="80" class="label">VAULT · READ-ONLY</text>
 
-  <rect x="165" y="154" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="177" y="170" fill="#e5e7eb" font-size="10" font-weight="600">marketing/</text><text x="258" y="170" fill="#6b7280" font-size="9">43</text>
-  <text x="177" y="182" fill="#4b5563" font-size="7">SEO · launch · content…</text>
+  <rect x="340" y="90" width="300" height="370" rx="8" class="zone"/>
+  <text x="352" y="80" class="label">ROUTER ENGINE</text>
 
-  <rect x="24" y="196" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="36" y="212" fill="#e5e7eb" font-size="10" font-weight="600">sales/</text><text x="88" y="212" fill="#6b7280" font-size="9">41</text>
-  <text x="36" y="224" fill="#4b5563" font-size="7">cold email · CRM · ABM…</text>
+  <rect x="660" y="90" width="300" height="370" rx="8" class="zone"/>
+  <text x="672" y="80" class="label">ACTIVE · AGENT READS HERE</text>
 
-  <rect x="165" y="196" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="177" y="212" fill="#e5e7eb" font-size="10" font-weight="600">hr/</text><text x="200" y="212" fill="#6b7280" font-size="9">33</text>
-  <text x="177" y="224" fill="#4b5563" font-size="7">recruiting · onboarding…</text>
+  <!-- ── USER ── -->
+  <rect x="340" y="30" width="160" height="32" rx="6" class="node input"/>
+  <text x="420" y="50" text-anchor="middle" class="label">YOU · "write a cold email…"</text>
 
-  <rect x="24" y="238" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="36" y="254" fill="#e5e7eb" font-size="10" font-weight="600">copywriting/</text><text x="122" y="254" fill="#6b7280" font-size="9">10</text>
+  <!-- ── VAULT FIELDS ── -->
+  <rect x="32" y="105" width="130" height="42" rx="4" class="node storage"/>
+  <text x="44" y="122" class="label">coding/</text>
+  <text x="44" y="138" class="small">288 skills</text>
 
-  <rect x="165" y="238" width="135" height="34" rx="4" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="177" y="254" fill="#e5e7eb" font-size="10" font-weight="600">cs / pm / finops</text>
-  <text x="177" y="266" fill="#4b5563" font-size="7">2 · 1 · 1</text>
+  <rect x="172" y="105" width="136" height="42" rx="4" class="node storage"/>
+  <text x="184" y="122" class="label">consulting/</text>
+  <text x="184" y="138" class="small">120 skills</text>
+
+  <rect x="32" y="155" width="130" height="42" rx="4" class="node storage"/>
+  <text x="44" y="172" class="label">finance/</text>
+  <text x="44" y="188" class="small">37 skills</text>
+
+  <rect x="172" y="155" width="136" height="42" rx="4" class="node storage"/>
+  <text x="184" y="172" class="label">marketing/</text>
+  <text x="184" y="188" class="small">43 skills</text>
+
+  <rect x="32" y="205" width="130" height="42" rx="4" class="node storage"/>
+  <text x="44" y="222" class="label">sales/</text>
+  <text x="44" y="238" class="small">41 skills</text>
+
+  <rect x="172" y="205" width="136" height="42" rx="4" class="node storage"/>
+  <text x="184" y="222" class="label">hr/</text>
+  <text x="184" y="238" class="small">33 skills</text>
+
+  <rect x="32" y="255" width="130" height="42" rx="4" class="node storage"/>
+  <text x="44" y="272" class="label">copywriting/</text>
+  <text x="44" y="288" class="small">10 skills</text>
+
+  <rect x="172" y="255" width="136" height="42" rx="4" class="node storage"/>
+  <text x="184" y="272" class="label">cs · pm · finops</text>
+  <text x="184" y="288" class="small">2 · 1 · 1</text>
 
   <!-- index.json -->
-  <rect x="24" y="292" width="276" height="50" rx="5" fill="#1a1a12" stroke="#fbbf24" stroke-width="1.5"/>
-  <text x="162" y="312" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="700">index.json</text>
-  <text x="162" y="328" text-anchor="middle" fill="#6b7280" font-size="8">name · description · keywords · field · creator — rebuilt on change</text>
+  <rect x="32" y="315" width="276" height="56" rx="4" class="node external"/>
+  <text x="170" y="336" text-anchor="middle" class="label">index.json</text>
+  <text x="170" y="354" text-anchor="middle" class="small">name · description · keywords · field</text>
 
-  <!-- Config -->
-  <rect x="24" y="352" width="276" height="36" rx="4" fill="#1a1410" stroke="#fbbf24" stroke-width="1"/>
-  <text x="162" y="372" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="600">config.yaml</text>
-  <text x="162" y="384" text-anchor="middle" fill="#6b7280" font-size="7">always-on list · paths · matching settings · written by installer</text>
+  <!-- config -->
+  <rect x="32" y="385" width="276" height="42" rx="4" class="node neutral"/>
+  <text x="170" y="406" text-anchor="middle" class="label">config.yaml</text>
+  <text x="170" y="420" text-anchor="middle" class="small">always-on list · paths · settings</text>
 
-  <!-- ── ROUTER ENGINE ── -->
-  <rect x="322" y="60" width="246" height="360" rx="10" fill="#111118" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="334" y="82" fill="#fbbf24" font-size="12" font-weight="700">ROUTER ENGINE</text>
-  <text x="334" y="97" fill="#6b7280" font-size="9">~800 token overhead · runs via SKILL.md on every turn</text>
+  <!-- ── ROUTER MODULES ── -->
+  <rect x="352" y="105" width="276" height="52" rx="4" class="node process"/>
+  <text x="368" y="124" class="label">Indexer</text>
+  <text x="368" y="140" class="small">Scans SKILL.md → extracts name, description, keywords</text>
 
-  <!-- Indexer -->
-  <rect x="334" y="112" width="222" height="52" rx="5" fill="#111118" stroke="#fbbf24" stroke-width="1.5"/>
-  <text x="348" y="130" fill="#fbbf24" font-size="10" font-weight="600">Indexer</text>
-  <text x="348" y="146" fill="#9ca3af" font-size="8">Scans SKILL.md files → extracts name, description, keywords</text>
-  <text x="348" y="158" fill="#6b7280" font-size="7">Builds the searchable index.json</text>
+  <rect x="352" y="167" width="276" height="52" rx="4" class="node process"/>
+  <text x="368" y="186" class="label">Matcher</text>
+  <text x="368" y="202" class="small">Keyword-weighted Jaccard: name ×3, keywords ×2, desc ×1</text>
 
-  <!-- Matcher -->
-  <rect x="334" y="172" width="222" height="52" rx="5" fill="#111118" stroke="#fb923c" stroke-width="1.5"/>
-  <text x="348" y="190" fill="#fb923c" font-size="10" font-weight="600">Matcher</text>
-  <text x="348" y="206" fill="#9ca3af" font-size="8">Keyword-weighted Jaccard scoring: name ×3 · keywords ×2 · desc ×1</text>
-  <text x="348" y="218" fill="#6b7280" font-size="7">Field-level intent signals for fast routing</text>
+  <rect x="352" y="229" width="276" height="52" rx="4" class="node process"/>
+  <text x="368" y="248" class="label">Vault Manager</text>
+  <text x="368" y="264" class="small">Symlink-only operations · atomic reconcile · 5 safety rules</text>
 
-  <!-- Vault Manager -->
-  <rect x="334" y="232" width="222" height="52" rx="5" fill="#111118" stroke="#fb7185" stroke-width="1.5"/>
-  <text x="348" y="250" fill="#fb7185" font-size="10" font-weight="600">Vault Manager</text>
-  <text x="348" y="266" fill="#9ca3af" font-size="8">Symlink-only operations · atomic reconcile · 5 safety rules</text>
-  <text x="348" y="278" fill="#6b7280" font-size="7">Agent never sees vault files — only symlinks in active/</text>
+  <rect x="352" y="291" width="276" height="52" rx="4" class="node neutral"/>
+  <text x="368" y="310" class="label">Cron Engine</text>
+  <text x="368" y="326" class="small">24h sweep · weekly report · crontab setup</text>
 
   <!-- Always-on lock -->
-  <rect x="334" y="296" width="222" height="50" rx="5" fill="#111118" stroke="#22d3ee" stroke-width="1" stroke-dasharray="3,3"/>
-  <text x="348" y="314" fill="#22d3ee" font-size="9" font-weight="600">🔒 ALWAYS-ON</text>
-  <text x="348" y="330" fill="#6b7280" font-size="7">caveman · un-slop · anti-slop · rsq-skill-router</text>
-  <text x="348" y="342" fill="#6b7280" font-size="7">user-selected skills · immune to deactivation</text>
+  <rect x="352" y="355" width="276" height="52" rx="4" class="node input"/>
+  <text x="368" y="374" class="label">🔒 Always-On Skills</text>
+  <text x="368" y="390" class="small">caveman · un-slop · anti-slop · router · user-selected</text>
 
-  <!-- Cron -->
-  <rect x="334" y="356" width="222" height="52" rx="5" fill="#111118" stroke="#6b7280" stroke-width="1.5"/>
-  <text x="348" y="374" fill="#9ca3af" font-size="10" font-weight="600">Cron Engine</text>
-  <text x="348" y="390" fill="#9ca3af" font-size="8">24h sweep — auto-vault newly installed skills</text>
-  <text x="348" y="402" fill="#6b7280" font-size="7">Weekly report — usage analytics + token savings + health checks</text>
+  <!-- ── ACTIVE SYMLINKS ── -->
+  <rect x="672" y="105" width="276" height="26" rx="4" class="node input"/>
+  <text x="684" y="122" class="label">🔒 caveman</text>
 
-  <!-- ── ACTIVE ── -->
-  <rect x="578" y="60" width="290" height="360" rx="10" fill="#111118" stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,3"/>
-  <text x="590" y="82" fill="#34d399" font-size="12" font-weight="700">ACTIVE · AGENT READS HERE</text>
-  <text x="590" y="97" fill="#6b7280" font-size="9">~/.hermes/skills/ · symlinks only · 5–15 at a time</text>
+  <rect x="672" y="137" width="276" height="26" rx="4" class="node input"/>
+  <text x="684" y="154" class="label">🔒 un-slop</text>
 
-  <!-- Locked -->
-  <rect x="590" y="112" width="266" height="26" rx="4" fill="#0a1618" stroke="#22d3ee" stroke-width="1"/>
-  <text x="602" y="128" fill="#22d3ee" font-size="9" font-weight="600">🔒 caveman</text>
-  <text x="602" y="134" fill="#4b5563" font-size="6">always-on symlink</text>
-  <rect x="590" y="142" width="266" height="26" rx="4" fill="#0a1618" stroke="#22d3ee" stroke-width="1"/>
-  <text x="602" y="158" fill="#22d3ee" font-size="9" font-weight="600">🔒 un-slop</text>
+  <!-- separator -->
+  <line x1="672" y1="177" x2="948" y2="177" stroke="#94a3b8" stroke-width="1"/>
 
-  <!-- Separator -->
-  <line x1="590" y1="180" x2="856" y2="180" stroke="#1f2937" stroke-width="1"/>
-  <text x="723" y="176" fill="#374151" font-size="7">── routed by matcher ──</text>
+  <rect x="672" y="192" width="276" height="26" rx="4" class="node storage"/>
+  <text x="684" y="209" class="label">cold-email-4-sequence</text>
 
-  <!-- Routed skill 1 -->
-  <rect x="590" y="192" width="266" height="26" rx="4" fill="#0a1a14" stroke="#34d399" stroke-width="1.5"/>
-  <text x="602" y="208" fill="#34d399" font-size="9" font-weight="600">cold-email-4-sequence</text>
-  <text x="602" y="214" fill="#4b5563" font-size="6">↗ vault/sales/</text>
+  <rect x="672" y="224" width="276" height="26" rx="4" class="node storage"/>
+  <text x="684" y="241" class="label">email-writing-frameworks</text>
 
-  <rect x="590" y="222" width="266" height="26" rx="4" fill="#0a1a14" stroke="#34d399" stroke-width="1.5"/>
-  <text x="602" y="238" fill="#34d399" font-size="9" font-weight="600">email-writing-frameworks</text>
-  <text x="602" y="244" fill="#4b5563" font-size="6">↗ vault/copywriting/</text>
+  <rect x="672" y="256" width="276" height="26" rx="4" class="node storage"/>
+  <text x="684" y="273" class="label">sales-sequence-builder</text>
 
-  <rect x="590" y="252" width="266" height="26" rx="4" fill="#0a1a14" stroke="#34d399" stroke-width="1.5"/>
-  <text x="602" y="268" fill="#34d399" font-size="9" font-weight="600">sales-sequence-builder</text>
-  <text x="602" y="274" fill="#4b5563" font-size="6">↗ vault/sales/</text>
+  <rect x="672" y="288" width="276" height="26" rx="4" class="node storage"/>
+  <text x="684" y="305" class="label">subject-lines</text>
 
-  <rect x="590" y="282" width="266" height="26" rx="4" fill="#0a1a14" stroke="#34d399" stroke-width="1.5"/>
-  <text x="602" y="298" fill="#34d399" font-size="9" font-weight="600">subject-lines</text>
-  <text x="602" y="304" fill="#4b5563" font-size="6">↗ vault/copywriting/</text>
+  <rect x="672" y="320" width="276" height="26" rx="4" class="node storage"/>
+  <text x="684" y="337" class="label">list-building</text>
 
-  <rect x="590" y="312" width="266" height="26" rx="4" fill="#0a1a14" stroke="#34d399" stroke-width="1.5"/>
-  <text x="602" y="328" fill="#34d399" font-size="9" font-weight="600">list-building</text>
-  <text x="602" y="334" fill="#4b5563" font-size="6">↗ vault/sales/</text>
+  <!-- Stats -->
+  <rect x="672" y="370" width="276" height="42" rx="4" class="node neutral"/>
+  <text x="810" y="390" text-anchor="middle" class="label">13 active / 568 in vault</text>
+  <text x="810" y="405" text-anchor="middle" class="small">2.3% overhead · 97.7% saved</text>
 
-  <!-- Footer stat -->
-  <rect x="590" y="352" width="266" height="56" rx="5" fill="#0a1a14" stroke="#34d399" stroke-width="1"/>
-  <text x="723" y="374" text-anchor="middle" fill="#34d399" font-size="12" font-weight="700">13 active / 568 in vault</text>
-  <text x="723" y="392" text-anchor="middle" fill="#6b7280" font-size="8">2.3% overhead · 97.7% saved</text>
-
-  <!-- ── ARROWS ── -->
-  <line x1="312" y1="110" x2="334" y2="110" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="316" y="104" fill="#a78bfa" font-size="7">reads</text>
-
-  <!-- Activate arrow -->
-  <line x1="568" y1="200" x2="590" y2="200" stroke="#34d399" stroke-width="2" marker-end="url(#arrowE)"/>
-  <text x="572" y="194" fill="#34d399" font-size="7">ACTIVATE</text>
-
-  <!-- Deactivate arrow -->
-  <line x1="590" y1="290" x2="568" y2="290" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowR)"/>
-  <text x="556" y="304" fill="#fb7185" font-size="7">DEACTIVATE</text>
-
-  <!-- User arrow -->
-  <rect x="400" y="22" width="140" height="26" rx="4" fill="#1a1a25" stroke="#22d3ee" stroke-width="1"/>
-  <text x="470" y="39" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="600">YOU — "write a cold email…"</text>
-  <line x1="470" y1="48" x2="470" y2="60" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <!-- ── EDGE LABELS ── -->
+  <text x="324" y="136" class="small">reads</text>
+  <text x="654" y="256" class="small">activate</text>
+  <text x="654" y="364" class="small">deactivate</text>
 
   <!-- ── LEGEND ── -->
-  <line x1="12" y1="430" x2="868" y2="430" stroke="#1f2937" stroke-width="1"/>
-  <text x="12" y="420" fill="#6b7280" font-size="8" font-weight="600">LEGEND</text>
-
-  <rect x="12" y="425" width="14" height="8" rx="2" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="30" y="432" fill="#6b7280" font-size="7">vault storage</text>
-
-  <rect x="110" y="425" width="14" height="8" rx="2" fill="#111118" stroke="#fbbf24" stroke-width="1"/>
-  <text x="128" y="432" fill="#6b7280" font-size="7">router engine</text>
-
-  <rect x="230" y="425" width="14" height="8" rx="2" fill="#111118" stroke="#34d399" stroke-width="1"/>
-  <text x="248" y="432" fill="#6b7280" font-size="7">active symlinks</text>
-
-  <rect x="350" y="425" width="14" height="8" rx="2" fill="#111118" stroke="#22d3ee" stroke-width="1"/>
-  <text x="368" y="432" fill="#6b7280" font-size="7">always-on (locked)</text>
-
-  <rect x="490" y="425" width="14" height="8" rx="2" fill="#111118" stroke="#fb7185" stroke-width="1"/>
-  <text x="508" y="432" fill="#6b7280" font-size="7">deactivate path</text>
-
-  <rect x="620" y="425" width="14" height="8" rx="2" fill="#111118" stroke="#fb923c" stroke-width="1"/>
-  <text x="638" y="432" fill="#6b7280" font-size="7">matching/scoring</text>
+  <rect x="20" y="464" width="14" height="10" rx="2" class="node storage"/>
+  <text x="40" y="473" class="small">vault storage</text>
+  <rect x="140" y="464" width="14" height="10" rx="2" class="node process"/>
+  <text x="160" y="473" class="small">router engine</text>
+  <rect x="280" y="464" width="14" height="10" rx="2" class="node input"/>
+  <text x="300" y="473" class="small">always-on</text>
+  <rect x="400" y="464" width="14" height="10" rx="2" class="node external"/>
+  <text x="420" y="473" class="small">config/index</text>
 </svg>

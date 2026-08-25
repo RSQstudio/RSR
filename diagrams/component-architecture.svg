@@ -1,151 +1,128 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 500" style="background:#0a0a0f;font-family:system-ui,-apple-system,sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 540">
+
   <defs>
-    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#6b7280"/>
-    </marker>
-    <marker id="arrowA" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#22d3ee"/>
-    </marker>
-    <marker id="arrowE" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
-    </marker>
-    <marker id="arrowV" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
-      <polygon points="0 0, 8 3, 0 6" fill="#a78bfa"/>
-    </marker>
+    <marker id="a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="#94a3b8"/></marker>
   </defs>
 
-  <!-- TITLE -->
-  <text x="440" y="28" text-anchor="middle" fill="#fff" font-size="15" font-weight="700">RSQ SKILL ROUTER — COMPONENT ARCHITECTURE</text>
-  <text x="440" y="44" text-anchor="middle" fill="#6b7280" font-size="10">Eight modules · One CLI · Install once, route forever</text>
+  <!-- ── EDGES (behind nodes) ── -->
 
-  <!-- ── CLI (top center) ── -->
-  <rect x="290" y="62" width="300" height="56" rx="8" fill="#111118" stroke="#fbbf24" stroke-width="2"/>
-  <text x="440" y="84" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="700">skill-router CLI</text>
-  <text x="440" y="100" text-anchor="middle" fill="#6b7280" font-size="8">install · index · route · reconcile · status · activate · config · cron</text>
-  <text x="440" y="112" text-anchor="middle" fill="#4b5563" font-size="7">Python 3.10+ · 8 commands · entry point</text>
+  <!-- Agent → CLI -->
+  <path d="M 140,56 L 310,56" class="edge" stroke-dasharray="5,4" marker-end="url(#a)"/>
 
-  <!-- Agent trigger -->
-  <rect x="12" y="70" width="120" height="28" rx="4" fill="#0a1618" stroke="#22d3ee" stroke-width="1"/>
-  <text x="72" y="80" text-anchor="middle" fill="#22d3ee" font-size="9" font-weight="600">AGENT</text>
-  <text x="72" y="92" text-anchor="middle" fill="#4b5563" font-size="6">reads SKILL.md</text>
-  <line x1="132" y1="84" x2="288" y2="84" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5,4" marker-end="url(#arrowA)"/>
+  <!-- CLI → modules -->
+  <path d="M 430,112 L 50,182" class="edge" marker-end="url(#a)"/>
+  <path d="M 430,112 L 180,182" class="edge" marker-end="url(#a)"/>
+  <path d="M 500,112 L 370,182" class="edge" marker-end="url(#a)"/>
+  <path d="M 500,112 L 550,182" class="edge" marker-end="url(#a)"/>
+  <path d="M 500,112 L 730,182" class="edge" marker-end="url(#a)"/>
+  <path d="M 500,112 L 900,182" class="edge" marker-end="url(#a)"/>
 
-  <!-- ARROWS from CLI to modules -->
-  <!-- Installer -->
-  <line x1="330" y1="118" x2="100" y2="155" stroke="#6b7280" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Module → Filesystem -->
+  <path d="M 50,235 L 50,390" class="edge" marker-end="url(#a)"/>
+  <path d="M 230,235 L 230,390" class="edge" marker-end="url(#a)"/>
+  <path d="M 410,235 L 290,390" class="edge" marker-end="url(#a)"/>
+  <path d="M 410,235 L 460,390" class="edge" marker-end="url(#a)"/>
+  <path d="M 590,235 L 630,390" class="edge" marker-end="url(#a)"/>
+  <path d="M 780,235 L 800,390" class="edge" marker-end="url(#a)"/>
+  <path d="M 920,235 L 920,390" class="edge" marker-end="url(#a)"/>
 
-  <!-- Agent Detector -->
-  <line x1="330" y1="118" x2="330" y2="155" stroke="#6b7280" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- SKILL.md → filesystem -->
+  <path d="M 460,330 L 460,388" class="edge" stroke-dasharray="5,4" marker-end="url(#a)"/>
 
-  <!-- Indexer -->
-  <line x1="440" y1="118" x2="440" y2="155" stroke="#6b7280" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- ── TITLE ── -->
+  <text x="490" y="30" text-anchor="middle" class="title">RSQ Skill Router · Component Architecture</text>
 
-  <!-- Matcher -->
-  <line x1="550" y1="118" x2="550" y2="155" stroke="#6b7280" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- Agent -->
+  <rect x="30" y="40" width="110" height="32" rx="6" class="node input"/>
+  <text x="85" y="60" text-anchor="middle" class="label">AGENT</text>
 
-  <!-- Vault Manager -->
-  <line x1="550" y1="118" x2="780" y2="155" stroke="#6b7280" stroke-width="1" marker-end="url(#arrow)"/>
+  <!-- CLI -->
+  <rect x="310" y="80" width="340" height="64" rx="8" class="node external"/>
+  <text x="480" y="102" text-anchor="middle" class="label">skill-router CLI</text>
+  <text x="480" y="120" text-anchor="middle" class="small">install · index · route · reconcile · status · activate · config · cron</text>
+  <text x="480" y="136" text-anchor="middle" class="small">Python 3.10+ · 8 commands · entry point</text>
 
   <!-- ── ROW 1: MODULES ── -->
-  <!-- Agent Detector -->
-  <rect x="220" y="155" width="220" height="58" rx="6" fill="#0a1618" stroke="#22d3ee" stroke-width="1.5"/>
-  <text x="240" y="175" fill="#22d3ee" font-size="11" font-weight="600">agent_detector.py</text>
-  <text x="240" y="192" fill="#9ca3af" font-size="8">Detects 11 agent frameworks</text>
-  <text x="240" y="205" fill="#6b7280" font-size="7">Hermes · Claude Code · Codex · Cursor · Copilot · Windsurf · Cline · OpenClaw · Aider · Continue · Generic</text>
+  <rect x="22" y="182" width="160" height="65" rx="6" class="node input"/>
+  <text x="38" y="202" class="label">agent_detector.py</text>
+  <text x="38" y="220" class="small">Auto-detects 11 frameworks</text>
+  <text x="38" y="236" class="small">Hermes · Claude · Codex · Cursor…</text>
 
-  <!-- Indexer -->
-  <rect x="330" y="155" width="220" height="58" rx="6" fill="#111118" stroke="#a78bfa" stroke-width="1.5"/>
-  <text x="350" y="175" fill="#a78bfa" font-size="11" font-weight="600">indexer.py</text>
-  <text x="350" y="192" fill="#9ca3af" font-size="8">Scans vault · extracts YAML frontmatter</text>
-  <text x="350" y="205" fill="#6b7280" font-size="7">name · description · keywords · field · creator → index.json</text>
+  <rect x="192" y="182" width="160" height="65" rx="6" class="node storage"/>
+  <text x="208" y="202" class="label">indexer.py</text>
+  <text x="208" y="220" class="small">Scans vault · builds index</text>
+  <text x="208" y="236" class="small">name · desc · keywords → json</text>
 
-  <!-- Matcher -->
-  <rect x="440" y="155" width="220" height="58" rx="6" fill="#1a1410" stroke="#fb923c" stroke-width="1.5"/>
-  <text x="460" y="175" fill="#fb923c" font-size="11" font-weight="600">matcher.py</text>
-  <text x="460" y="192" fill="#9ca3af" font-size="8">Intent → skill matching</text>
-  <text x="460" y="205" fill="#6b7280" font-size="7">Weighted Jaccard · name×3 · keywords×2 · desc×1</text>
+  <rect x="362" y="182" width="160" height="65" rx="6" class="node process"/>
+  <text x="378" y="202" class="label">matcher.py</text>
+  <text x="378" y="220" class="small">Intent → skill scoring</text>
+  <text x="378" y="236" class="small">name×3 · keywords×2 · desc×1</text>
 
-  <!-- Vault Manager -->
-  <rect x="670" y="155" width="198" height="58" rx="6" fill="#1a1012" stroke="#fb7185" stroke-width="1.5"/>
-  <text x="690" y="175" fill="#fb7185" font-size="11" font-weight="600">vault_manager.py</text>
-  <text x="690" y="192" fill="#9ca3af" font-size="8">Symlink ops · atomic reconcile</text>
-  <text x="690" y="205" fill="#6b7280" font-size="7">5 safety guarantees · activate/deactivate</text>
+  <rect x="532" y="182" width="160" height="65" rx="6" class="node process"/>
+  <text x="548" y="202" class="label">installer.py</text>
+  <text x="548" y="220" class="small">Interactive wizard</text>
+  <text x="548" y="236" class="small">Always-on picker · cron setup</text>
 
-  <!-- ── ROW 2: MORE MODULES ── -->
-  <!-- Installer -->
-  <rect x="12" y="155" width="198" height="58" rx="6" fill="#1a1410" stroke="#fbbf24" stroke-width="1.5"/>
-  <text x="32" y="175" fill="#fbbf24" font-size="11" font-weight="600">installer.py</text>
-  <text x="32" y="192" fill="#9ca3af" font-size="8">Interactive wizard</text>
-  <text x="32" y="205" fill="#6b7280" font-size="7">Always-on picker · cron setup offer</text>
+  <rect x="702" y="182" width="160" height="65" rx="6" class="node risk"/>
+  <text x="718" y="202" class="label">vault_manager.py</text>
+  <text x="718" y="220" class="small">Symlink ops · reconcile</text>
+  <text x="718" y="236" class="small">5 safety rules · never touches files</text>
 
-  <!-- Cron -->
-  <rect x="440" y="228" width="220" height="50" rx="6" fill="#111118" stroke="#6b7280" stroke-width="1.5"/>
-  <text x="460" y="248" fill="#9ca3af" font-size="11" font-weight="600">cron.py</text>
-  <text x="460" y="265" fill="#6b7280" font-size="8">Background maintenance · 24h sweep · weekly report</text>
+  <rect x="872" y="182" width="90" height="65" rx="6" class="node neutral"/>
+  <text x="888" y="202" class="label">cron.py</text>
+  <text x="888" y="220" class="small">sweep</text>
+  <text x="888" y="236" class="small">report</text>
 
-  <!-- SKILL.md (center) -->
-  <rect x="290" y="310" width="300" height="52" rx="8" fill="#0a1618" stroke="#22d3ee" stroke-width="2"/>
-  <text x="440" y="332" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="700">SKILL.md</text>
-  <text x="440" y="350" text-anchor="middle" fill="#6b7280" font-size="8">Agent auto-loads this — runs reconcile on every turn — transparent to user</text>
+  <!-- SKILL.md -->
+  <rect x="370" y="288" width="240" height="52" rx="8" class="node input"/>
+  <text x="490" y="310" text-anchor="middle" class="label">SKILL.md</text>
+  <text x="490" y="328" text-anchor="middle" class="small">Agent auto-loads · runs reconcile every turn</text>
 
-  <!-- ── FILESYSTEM ── -->
-  <rect x="12" y="384" width="856" height="104" rx="10" fill="#111118" stroke="#374151" stroke-width="1.5" stroke-dasharray="6,4"/>
-  <text x="24" y="374" fill="#4b5563" font-size="10" font-weight="600">FILESYSTEM — ~/.hermes/</text>
+  <!-- ── FILESYSTEM ZONE ── -->
+  <rect x="20" y="370" width="940" height="150" rx="8" class="zone"/>
 
   <!-- skills-vault/ -->
-  <rect x="30" y="398" width="200" height="76" rx="6" fill="#111118" stroke="#a78bfa" stroke-width="1.5"/>
-  <text x="46" y="420" fill="#a78bfa" font-size="11" font-weight="600">skills-vault/</text>
-  <text x="46" y="438" fill="#6b7280" font-size="8">Read-only · 568 skills</text>
-  <text x="46" y="454" fill="#6b7280" font-size="8">10 fields · never modified</text>
-  <text x="46" y="468" fill="#4b5563" font-size="7">indexed by indexer.py</text>
+  <rect x="40" y="400" width="190" height="80" rx="6" class="node storage"/>
+  <text x="56" y="422" class="label">skills-vault/</text>
+  <text x="56" y="438" class="small">568 skills · 10 fields</text>
+  <text x="56" y="454" class="small">Read-only · never modified</text>
+  <text x="56" y="470" class="small">indexed by indexer.py</text>
 
   <!-- skills/ -->
-  <rect x="248" y="398" width="240" height="76" rx="6" fill="#0a1a14" stroke="#34d399" stroke-width="2"/>
-  <text x="264" y="420" fill="#34d399" font-size="11" font-weight="600">skills/</text>
-  <text x="264" y="438" fill="#6b7280" font-size="8">Symlinks only · 5–15 active</text>
-  <text x="264" y="454" fill="#6b7280" font-size="8">Agent reads from here</text>
-  <text x="264" y="468" fill="#4b5563" font-size="7">managed by vault_manager.py</text>
+  <rect x="250" y="400" width="190" height="80" rx="6" class="node storage"/>
+  <text x="266" y="422" class="label">skills/</text>
+  <text x="266" y="438" class="small">Symlinks only · 5–15 active</text>
+  <text x="266" y="454" class="small">Agent reads from here</text>
+  <text x="266" y="470" class="small">managed by vault_manager</text>
 
   <!-- config.yaml -->
-  <rect x="506" y="398" width="160" height="76" rx="6" fill="#1a1410" stroke="#fbbf24" stroke-width="1.5"/>
-  <text x="522" y="420" fill="#fbbf24" font-size="11" font-weight="600">config.yaml</text>
-  <text x="522" y="438" fill="#6b7280" font-size="8">Always-on list</text>
-  <text x="522" y="454" fill="#6b7280" font-size="8">Paths · matching</text>
-  <text x="522" y="468" fill="#4b5563" font-size="7">written by installer</text>
+  <rect x="460" y="400" width="160" height="80" rx="6" class="node external"/>
+  <text x="476" y="422" class="label">config.yaml</text>
+  <text x="476" y="438" class="small">Always-on list</text>
+  <text x="476" y="454" class="small">Paths · matching</text>
+  <text x="476" y="470" class="small">Saved by installer</text>
 
   <!-- .cache/ -->
-  <rect x="684" y="398" width="170" height="76" rx="6" fill="#111118" stroke="#6b7280" stroke-width="1.5"/>
-  <text x="700" y="420" fill="#9ca3af" font-size="11" font-weight="600">.cache/</text>
-  <text x="700" y="438" fill="#6b7280" font-size="8">index.json · usage.jsonl</text>
-  <text x="700" y="454" fill="#6b7280" font-size="8">cron.log</text>
-  <text x="700" y="468" fill="#4b5563" font-size="7">auto-generated</text>
+  <rect x="640" y="400" width="160" height="80" rx="6" class="node neutral"/>
+  <text x="656" y="422" class="label">.cache/</text>
+  <text x="656" y="438" class="small">index.json</text>
+  <text x="656" y="454" class="small">usage.jsonl</text>
+  <text x="656" y="470" class="small">cron.log</text>
 
-  <!-- ARROWS module → filesystem -->
-  <line x1="130" y1="213" x2="130" y2="396" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowV)"/>
-  <line x1="440" y1="213" x2="370" y2="396" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowV)"/>
-  <line x1="440" y1="362" x2="370" y2="396" stroke="#34d399" stroke-width="1.5" marker-end="url(#arrowE)"/>
-  <line x1="550" y1="213" x2="590" y2="396" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <line x1="550" y1="278" x2="770" y2="396" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arrowV)"/>
+  <!-- ~/.hermes/ label -->
+  <text x="490" y="395" text-anchor="middle" class="small">FILESYSTEM · ~/.hermes/</text>
 
   <!-- ── LEGEND ── -->
-  <line x1="12" y1="484" x2="868" y2="484" stroke="#1f2937" stroke-width="1"/>
-  <text x="12" y="478" fill="#6b7280" font-size="8" font-weight="600">LEGEND</text>
-
-  <rect x="12" y="480" width="14" height="8" rx="2" fill="#111118" stroke="#fbbf24" stroke-width="1"/>
-  <text x="30" y="487" fill="#6b7280" font-size="7">CLI / entry point</text>
-
-  <rect x="150" y="480" width="14" height="8" rx="2" fill="#111118" stroke="#a78bfa" stroke-width="1"/>
-  <text x="168" y="487" fill="#6b7280" font-size="7">data / index processing</text>
-
-  <rect x="320" y="480" width="14" height="8" rx="2" fill="#111118" stroke="#fb923c" stroke-width="1"/>
-  <text x="338" y="487" fill="#6b7280" font-size="7">logic / intent matching</text>
-
-  <rect x="490" y="480" width="14" height="8" rx="2" fill="#111118" stroke="#fb7185" stroke-width="1"/>
-  <text x="508" y="487" fill="#6b7280" font-size="7">safety / file operations</text>
-
-  <rect x="660" y="480" width="14" height="8" rx="2" fill="#111118" stroke="#22d3ee" stroke-width="1"/>
-  <text x="678" y="487" fill="#6b7280" font-size="7">agent interface</text>
-
-  <rect x="790" y="480" width="14" height="8" rx="2" fill="#111118" stroke="#6b7280" stroke-width="1"/>
-  <text x="808" y="487" fill="#6b7280" font-size="7">background / cron</text>
+  <rect x="20" y="526" width="14" height="10" rx="2" class="node input"/>
+  <text x="40" y="535" class="small">agent / installer</text>
+  <rect x="160" y="526" width="14" height="10" rx="2" class="node storage"/>
+  <text x="180" y="535" class="small">data / index</text>
+  <rect x="280" y="526" width="14" height="10" rx="2" class="node process"/>
+  <text x="300" y="535" class="small">logic / matching</text>
+  <rect x="420" y="526" width="14" height="10" rx="2" class="node risk"/>
+  <text x="440" y="535" class="small">safety / operations</text>
+  <rect x="580" y="526" width="14" height="10" rx="2" class="node external"/>
+  <text x="600" y="535" class="small">config / entry</text>
+  <rect x="720" y="526" width="14" height="10" rx="2" class="node neutral"/>
+  <text x="740" y="535" class="small">background / cron</text>
 </svg>
