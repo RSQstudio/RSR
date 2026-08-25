@@ -11,13 +11,22 @@ Usage:
 
 from __future__ import annotations
 
+import logging
 import shutil
 import sys
 from pathlib import Path
 from typing import Any
 
-from . import agent_detector
-from .indexer import build_index
+try:
+    from . import agent_detector
+    from .cron import setup_cron
+    from .indexer import build_index
+except ImportError:
+    import agent_detector  # type: ignore[no-redef]
+    from cron import setup_cron  # type: ignore[no-redef]
+    from indexer import build_index  # type: ignore[no-redef]
+
+log = logging.getLogger("skill-router.installer")
 
 
 # ── Helper: pretty printing ───────────────────────────────
@@ -118,8 +127,8 @@ def _find_skills(directory: Path, ignore_symlinks: bool = True) -> list[tuple[st
                 if line.startswith("description:"):
                     snippet = line.split(":", 1)[1].strip().strip('"').strip("'")[:80]
                     break
-        except Exception:
-            pass
+        except (OSError, UnicodeError):
+            log.debug("Could not inspect skill description: %s", entry, exc_info=True)
 
         results.append((entry.name, entry, snippet))
 
@@ -203,7 +212,7 @@ def run_install(
             for e in detected.evidence:
                 print(f"    • {e}")
     else:
-        print(f"\n  No agent auto-detected.")
+        print("\n  No agent auto-detected.")
 
     print()
     print("  Supported agents:")
@@ -214,15 +223,15 @@ def run_install(
     if non_interactive:
         chosen_skills_dir = detected.skills_dir if detected.skills_dir else Path.home() / ".agent-skills"
         chosen_vault_dir = agent_detector.resolve_vault_dir()
-        print(f"\n  Non-interactive mode — using detected defaults.")
+        print("\n  Non-interactive mode — using detected defaults.")
     else:
         default_dir = str(detected.skills_dir) if detected.skills_dir else "~/.agent-skills"
-        custom = _input(f"\n  Skills directory path", default_dir)
+        custom = _input("\n  Skills directory path", default_dir)
         chosen_skills_dir = Path(custom).expanduser()
         chosen_skills_dir.mkdir(parents=True, exist_ok=True)
 
         default_vault = str(chosen_skills_dir.parent / "skills-vault")
-        custom_vault = _input(f"  Vault directory path", default_vault)
+        custom_vault = _input("  Vault directory path", default_vault)
         chosen_vault_dir = Path(custom_vault).expanduser()
 
     # ── Step 2: Find skills ──
@@ -234,9 +243,9 @@ def run_install(
 
     if not all_skills:
         print(f"\n  ⚠️  No real skill folders found in {chosen_skills_dir}")
-        print(f"  Skill Router needs at least one SKILL.md-based skill to start.")
-        print(f"  Install some skills first, then re-run `skill-router install`.")
-        print(f"\n  Tip: npx skills add <user/repo> --global")
+        print("  Skill Router needs at least one SKILL.md-based skill to start.")
+        print("  Install some skills first, then re-run `skill-router install`.")
+        print("\n  Tip: npx skills add <user/repo> --global")
         sys.exit(0)
 
     if has_symlinks:
@@ -246,7 +255,7 @@ def run_install(
         print(f"\n  Found {len(all_skills)} skill folders")
 
     # Print skill list
-    print(f"\n  Your installed skills:")
+    print("\n  Your installed skills:")
     for i, (name, _, snippet) in enumerate(all_skills, 1):
         snip = f" — {snippet[:60]}..." if snippet and len(snippet) > 60 else (f" — {snippet}" if snippet else "")
         print(f"    {i:3}. {name}{snip}")
@@ -333,8 +342,8 @@ def run_install(
         print(f"    ... and {len(to_move) - 10} more")
 
     if not to_move:
-        print(f"\n  Nothing to move. Your active directory is already clean.")
-        print(f"  Building index anyway...")
+        print("\n  Nothing to move. Your active directory is already clean.")
+        print("  Building index anyway...")
         chosen_vault_dir.mkdir(parents=True, exist_ok=True)
         index = build_index(chosen_vault_dir, Path(config["paths"]["index_cache"]).expanduser())
         print(f"  Index: {index['total_skills']} skills across {len(index['fields'])} fields")
@@ -347,7 +356,7 @@ def run_install(
         return
 
     if non_interactive:
-        print(f"\n  Non-interactive mode — proceeding automatically.")
+        print("\n  Non-interactive mode — proceeding automatically.")
     else:
         proceed = _yesno(f"\n  Move {len(to_move)} skills into the vault?")
         if not proceed:
@@ -432,9 +441,8 @@ def run_install(
 """)
 
     # Also write the config file so the user doesn't need to configure manually
-    config_dir = Path("~/.config/skill-router").expanduser()
-    config_dir.mkdir(parents=True, exist_ok=True)
-    config_file = config_dir / "config.yaml"
+    config_file = Path("~/.config/skill-router/config.json").expanduser()
+    config_file.parent.mkdir(parents=True, exist_ok=True)
 
     out_config = {
         "paths": {
@@ -454,10 +462,10 @@ def run_install(
     print(f"  💾 Config saved to {config_file}")
 
     # ── Offer cron setup ──
-    print(f"\n  ── Background Maintenance ──")
-    print(f"  Skill Router works best with two background jobs:")
-    print(f"    • 24h sweep   — automatically moves new skills into the vault")
-    print(f"    • Weekly report — shows which skills you actually use, tokens saved")
+    print("\n  ── Background Maintenance ──")
+    print("  Skill Router works best with two background jobs:")
+    print("    • 24h sweep   — automatically moves new skills into the vault")
+    print("    • Weekly report — shows which skills you actually use, tokens saved")
     print()
 
     if non_interactive:
@@ -466,28 +474,6 @@ def run_install(
     else:
         setup = _yesno("  Install cron jobs now?", default=True)
         if setup:
-            import subprocess, sys
-            script = Path(__file__).resolve().parent / "cron.py"
-            python = sys.executable
-            try:
-                result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
-                current = result.stdout.strip()
-            except Exception:
-                current = ""
-            if "# skill-router-start" not in current:
-                entries = f"""
-# skill-router-start — managed by Skill Router
-0 3 * * * {python} {script} sweep >> ~/.cache/skill-router/cron.log 2>&1
-0 8 * * 1 {python} {script} report >> ~/.cache/skill-router/cron.log 2>&1
-# skill-router-end
-"""
-                new_cron = (current.rstrip() + "\n" + entries).strip() + "\n"
-                proc = subprocess.run(["crontab"], input=new_cron, capture_output=True, text=True)
-                if proc.returncode == 0:
-                    print("  ✅ Cron jobs installed — daily sweep + weekly report")
-                else:
-                    print(f"  ⚠️  cron install failed — run `skill-router cron setup` later")
-            else:
-                print("  ℹ️  Cron already installed.")
+            setup_cron()
         else:
             print("  Skipped. Run `skill-router cron setup` anytime.")

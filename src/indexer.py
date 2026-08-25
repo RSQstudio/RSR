@@ -33,13 +33,11 @@ Index format:
 from __future__ import annotations
 
 import json
-import os
 import re
 import time
 from collections import Counter
 from pathlib import Path
 from typing import Any
-
 
 # ── Helpers ──────────────────────────────────────────────
 
@@ -141,11 +139,14 @@ def build_index(
             text = skill_md.read_text(encoding="utf-8", errors="replace")
             body, fm = _parse_frontmatter(text)
 
-            name = fm.get("name", skill_dir.name)
+            # Directory names are the activation identity used by vault_manager.
+            # Keep the frontmatter value for display/search without breaking routing.
+            name = skill_dir.name
+            display_name = fm.get("name", name)
             description = fm.get("description", "").replace("\n", " ").strip()
 
-            # Extract keywords from name + description + body (combined)
-            combined = f"{name} {description} {body[:2000]}"
+            # Extract keywords from directory name + metadata + body (combined)
+            combined = f"{name} {display_name} {description} {body[:2000]}"
             keywords = _extract_keywords(combined)
 
             # Infer creator from skill folder name (e.g., "ecc__python-patterns" → "ecc")
@@ -156,6 +157,7 @@ def build_index(
 
             skills.append({
                 "name": name,
+                "display_name": display_name,
                 "description": description[:300],
                 "keywords": keywords,
                 "creator": creator,

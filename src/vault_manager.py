@@ -2,14 +2,14 @@
 
 Safety rules:
   - NEVER deletes files from vault (read-only source of truth)
-  - Only operates on symlinks in active/ (never touches real files)
+  - Never replaces real files or unmanaged symlinks in active/
   - Always-keep skills are immune to deactivation
-  - Atomic operations: no partial state between activate and deactivate
+  - Activates requested skills before removing stale router-managed links
   - Auto-logs all reconciles to usage tracker
 
 Architecture:
-  vault/   → READ-ONLY source  (all skills live here forever)
-  active/  → MANAGED symlinks   (only active skills point here)
+  vault/   → READ-ONLY source  (all routed skills live here)
+  active/  → router-managed symlinks plus preserved real always-on skills
 
 The agent's skill loader reads from active/. The vault is invisible to the agent.
 """
@@ -18,11 +18,9 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-
 
 log = logging.getLogger("skill-router.vault")
 
@@ -41,8 +39,8 @@ def _log_router_action(action: str, details: dict[str, Any] | None = None) -> No
             entry["details"] = details
         with open(log_path, "a") as f:
             f.write(json.dumps(entry) + "\n")
-    except Exception:
-        pass  # Never let logging fail the operation
+    except OSError:
+        log.debug("Could not write usage log", exc_info=True)
 
 
 # ── Core operations ──────────────────────────────────────
@@ -63,10 +61,21 @@ def _skill_symlinks(active_dir: Path) -> dict[str, Path]:
     return result
 
 
+def _real_skill_dirs(active_dir: Path) -> dict[str, Path]:
+    """Return unmanaged real skill directories currently present in active/."""
+    if not active_dir.is_dir():
+        return {}
+    return {
+        entry.name: entry
+        for entry in active_dir.iterdir()
+        if not entry.is_symlink() and entry.is_dir() and (entry / "SKILL.md").is_file()
+    }
+
+
 def get_active_skills(active_path: str | Path) -> list[str]:
-    """List currently active skills (by symlink name)."""
+    """List all valid skills presently loaded from the active directory."""
     active = Path(active_path).expanduser()
-    return sorted(_skill_symlinks(active).keys())
+    return sorted(set(_skill_symlinks(active)) | set(_real_skill_dirs(active)))
 
 
 def get_vault_skills(vault_path: str | Path) -> list[str]:
@@ -85,12 +94,19 @@ def get_vault_skills(vault_path: str | Path) -> list[str]:
     return skills
 
 
+def _is_valid_skill_name(name: str) -> bool:
+    """Accept only one safe directory component as a skill name."""
+    return bool(name) and name not in {".", ".."} and Path(name).name == name and "\x00" not in name
+
+
 def find_skill_in_vault(
     vault_path: str | Path,
     skill_name: str,
 ) -> Path | None:
     """Find a skill directory in the vault by name. Returns the vault path or None."""
     vault = Path(vault_path).expanduser()
+    if not _is_valid_skill_name(skill_name) or not vault.is_dir():
+        return None
     for field_dir in vault.iterdir():
         if not field_dir.is_dir() or field_dir.name.startswith("."):
             continue
@@ -115,32 +131,61 @@ def activate_skills(
     active = Path(active_path).expanduser()
     active.mkdir(parents=True, exist_ok=True)
 
-    result: dict[str, list[str]] = {"activated": [], "already_active": [], "not_found": []}
-    current = _skill_symlinks(active)
+    result: dict[str, list[str]] = {
+        "activated": [],
+        "already_active": [],
+        "not_found": [],
+        "invalid": [],
+        "conflicts": [],
+    }
 
     for name in skill_names:
-        if name in current and _is_symlink(current[name]):
-            result["already_active"].append(name)
+        if not _is_valid_skill_name(name):
+            result["invalid"].append(name)
+            log.error("Refused unsafe skill name: %r", name)
             continue
 
         src = find_skill_in_vault(vault, name)
         if src is None:
             result["not_found"].append(name)
-            log.warning(f"Skill not found in vault: {name}")
+            log.warning("Skill not found in vault: %s", name)
             continue
 
         dst = active / name
+        if dst.is_symlink():
+            try:
+                if dst.resolve(strict=True) == src.resolve(strict=True):
+                    result["already_active"].append(name)
+                    continue
+            except OSError:
+                pass
+            result["conflicts"].append(name)
+            log.error("Refused to replace existing symlink: %s", dst)
+            continue
+        if dst.exists():
+            result["conflicts"].append(name)
+            log.error("Refused to replace real active path: %s", dst)
+            continue
+
         if dry_run:
             result["activated"].append(name)
-            log.info(f"[DRY RUN] Would symlink: {src} → {dst}")
+            log.info("[DRY RUN] Would symlink: %s → %s", src, dst)
         else:
-            if dst.exists() or dst.is_symlink():
-                dst.unlink()
             dst.symlink_to(src, target_is_directory=True)
             result["activated"].append(name)
-            log.info(f"Activated: {name}")
+            log.info("Activated: %s", name)
 
     return result
+
+
+def _is_managed_symlink(path: Path, vault_dir: Path) -> bool:
+    """Return whether a live skill symlink points to a skill inside this vault."""
+    try:
+        target = path.resolve(strict=True)
+        vault = vault_dir.resolve(strict=True)
+    except OSError:
+        return False
+    return target.is_relative_to(vault) and (target / "SKILL.md").is_file()
 
 
 def deactivate_skills(
@@ -148,6 +193,7 @@ def deactivate_skills(
     skill_names: list[str],
     always_keep: list[str] | None = None,
     dry_run: bool = False,
+    vault_path: str | Path | None = None,
 ) -> dict[str, Any]:
     """Remove symlinks from active/ for the given skills.
 
@@ -157,8 +203,14 @@ def deactivate_skills(
     """
     always_keep = always_keep or []
     active = Path(active_path).expanduser()
+    vault = Path(vault_path).expanduser() if vault_path is not None else None
 
-    result: dict[str, list[str]] = {"deactivated": [], "protected": [], "not_found": []}
+    result: dict[str, list[str]] = {
+        "deactivated": [],
+        "protected": [],
+        "not_found": [],
+        "unmanaged": [],
+    }
     current = _skill_symlinks(active)
 
     for name in skill_names:
@@ -171,6 +223,10 @@ def deactivate_skills(
             continue
 
         symlink = current[name]
+        if vault is None or not _is_managed_symlink(symlink, vault):
+            result["unmanaged"].append(name)
+            log.error("Refused to remove unmanaged symlink: %s", symlink)
+            continue
         if dry_run:
             result["deactivated"].append(name)
             log.info(f"[DRY RUN] Would remove: {symlink}")
@@ -190,14 +246,15 @@ def deactivate_all(
     active_path: str | Path,
     always_keep: list[str] | None = None,
     dry_run: bool = False,
+    vault_path: str | Path | None = None,
 ) -> dict[str, Any]:
-    """Remove ALL symlinks from active/, except always_keep skills."""
+    """Remove all router-managed symlinks from active/, except always_keep skills."""
     always_keep = always_keep or []
     active = Path(active_path).expanduser()
     current = _skill_symlinks(active)
 
     to_remove = [name for name in current if name not in always_keep]
-    return deactivate_skills(active, to_remove, always_keep, dry_run)
+    return deactivate_skills(active, to_remove, always_keep, dry_run, vault_path)
 
 
 def reconcile(
@@ -218,12 +275,16 @@ def reconcile(
     always_keep = always_keep or []
     active = Path(active_path).expanduser()
     current = _skill_symlinks(active)
-    current_names = set(current.keys())
+    real_active = _real_skill_dirs(active)
+    current_names = set(current)
+    loaded_names = current_names | set(real_active)
 
     # Desired = matcher output + always-keep
     target = set(desired_skills) | set(always_keep)
 
-    to_activate = target - current_names
+    # Real skill folders are user-managed until the configured sweep archives them.
+    # Never replace or deactivate them during reconciliation.
+    to_activate = target - loaded_names
     to_deactivate = current_names - target
     # Always-keep is immune from deactivation
     to_deactivate = to_deactivate - set(always_keep)
@@ -231,8 +292,8 @@ def reconcile(
     result: dict[str, Any] = {
         "activated": [],
         "deactivated": [],
-        "protected": list(set(always_keep) & current_names),
-        "unchanged": list(target & current_names),
+        "protected": sorted(set(always_keep) & loaded_names),
+        "unchanged": sorted(target & loaded_names),
     }
 
     # Activate first (safest: add before remove)
@@ -243,9 +304,10 @@ def reconcile(
 
     # Deactivate stale skills
     if to_deactivate:
-        deact_result = deactivate_skills(active_path, sorted(to_deactivate), always_keep, dry_run)
+        deact_result = deactivate_skills(active_path, sorted(to_deactivate), always_keep, dry_run, vault_path)
         result["deactivated"] = deact_result["deactivated"]
         result.setdefault("not_found", []).extend(deact_result["not_found"])
+        result.setdefault("unmanaged", []).extend(deact_result["unmanaged"])
 
     # Log usage for weekly reports
     if not dry_run:
@@ -279,6 +341,7 @@ if __name__ == "__main__":
     deact_parser = sub.add_parser("deactivate", help="Deactivate skills")
     deact_parser.add_argument("skills", nargs="+", help="Skill names to deactivate")
     deact_parser.add_argument("--active", default="~/.hermes/skills")
+    deact_parser.add_argument("--vault", default="~/.hermes/skills-vault")
     deact_parser.add_argument("--keep", nargs="*", default=[])
     deact_parser.add_argument("--dry-run", action="store_true")
 
@@ -310,7 +373,7 @@ if __name__ == "__main__":
         print(_json.dumps(result, indent=2))
 
     elif args.cmd == "deactivate":
-        result = deactivate_skills(args.active, args.skills, args.keep, args.dry_run)
+        result = deactivate_skills(args.active, args.skills, args.keep, args.dry_run, args.vault)
         print(_json.dumps(result, indent=2))
 
     elif args.cmd == "reconcile":

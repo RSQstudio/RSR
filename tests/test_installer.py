@@ -1,11 +1,11 @@
 import json
 import os
+import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
-import unittest
 from unittest.mock import patch
 
-import src.installer as installer
+from src import installer
 from src.installer import (
     choose_router_skill_installation,
     configured_always_keep,
@@ -163,7 +163,7 @@ class InstallRouterSkillTests(unittest.TestCase):
             self.assertTrue((active / "caveman" / "SKILL.md").is_file())
             self.assertTrue((active / "anti-slop" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "un-slop" / "SKILL.md").is_file())
-            written_config = json.loads((root / ".config" / "skill-router" / "config.yaml").read_text(encoding="utf-8"))
+            written_config = json.loads((root / ".config" / "skill-router" / "config.json").read_text(encoding="utf-8"))
             self.assertEqual(written_config["always_keep"], ["caveman", "anti-slop"])
 
     def test_noninteractive_wizard_installs_router_skill(self) -> None:
@@ -205,7 +205,7 @@ class InstallRouterSkillTests(unittest.TestCase):
             self.assertTrue((active / "caveman" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "un-slop" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "demo-skill" / "SKILL.md").is_file())
-            written_config = json.loads((root / ".config" / "skill-router" / "config.yaml").read_text(encoding="utf-8"))
+            written_config = json.loads((root / ".config" / "skill-router" / "config.json").read_text(encoding="utf-8"))
             self.assertEqual(written_config["always_keep"], ["caveman"])
 
 

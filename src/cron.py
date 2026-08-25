@@ -20,23 +20,30 @@ from typing import Any
 # Support both `python -m src.cron` and direct execution
 try:
     from . import agent_detector
-    from .indexer import build_index, load_index
-    from .vault_manager import (_skill_symlinks, activate_skills, get_active_skills,
-                                 get_vault_skills, reconcile)
+    from .indexer import build_index
+    from .vault_manager import get_active_skills, get_vault_skills
 except ImportError:
     import agent_detector  # type: ignore[no-redef]
-    from indexer import build_index, load_index  # type: ignore[no-redef]
-    from vault_manager import (_skill_symlinks, activate_skills, get_active_skills,  # type: ignore[no-redef]
-                                get_vault_skills, reconcile)
+    from indexer import build_index  # type: ignore[no-redef]
+    from vault_manager import (  # type: ignore[no-redef]
+        get_active_skills,
+        get_vault_skills,
+    )
 
 
 # ── Paths ─────────────────────────────────────────────────
 
 def _config_file() -> Path:
-    cf = Path("~/.config/skill-router/config.yaml").expanduser()
-    if cf.exists():
-        return cf
-    return Path("config.yaml")
+    config_dir = Path("~/.config/skill-router").expanduser()
+    for name in ("config.json", "config.yaml"):
+        candidate = config_dir / name
+        if candidate.exists():
+            return candidate
+    for name in ("config.json", "config.yaml"):
+        candidate = Path(name)
+        if candidate.exists():
+            return candidate
+    return config_dir / "config.json"
 
 
 def _load_config() -> dict[str, Any]:
@@ -225,7 +232,6 @@ def report(config: dict[str, Any] | None = None, days: int = 7) -> str:
 
     # Token savings estimate
     avg_skill_tokens = 100  # ~100 tokens per skill description
-    tokens_loaded = total_active * avg_skill_tokens
     tokens_saved = (total_vault - total_active) * avg_skill_tokens
     total_skills_loaded_across_week = sum(activations.values())
     tokens_saved_cumulative = total_skills_loaded_across_week * avg_skill_tokens
@@ -233,7 +239,7 @@ def report(config: dict[str, Any] | None = None, days: int = 7) -> str:
     # Build report
     lines = []
     lines.append("═══════════════════════════════════════════")
-    lines.append(f"  SKILL ROUTER — Weekly Report")
+    lines.append("  SKILL ROUTER — Weekly Report")
     lines.append(f"  {datetime.now(timezone.utc).strftime('%Y-%m-%d')}  |  Last {days} days")
     lines.append("═══════════════════════════════════════════")
     lines.append("")
@@ -275,7 +281,7 @@ def report(config: dict[str, Any] | None = None, days: int = 7) -> str:
     if len(never_used) > total_vault * 0.5:
         lines.append(f"  ℹ️  {len(never_used)} unused skills — could be pruned or moved to cold storage")
     if not lines[-1].startswith("  ⚠️"):
-        lines.append(f"  ✅ Router is healthy")
+        lines.append("  ✅ Router is healthy")
     lines.append("")
     lines.append("═══════════════════════════════════════════")
 
@@ -312,16 +318,19 @@ def setup_cron(config: dict[str, Any] | None = None, dry_run: bool = False) -> N
     - 24h sweep: runs daily at 03:00 UTC — scans for new skills, moves to vault
     - Weekly report: runs Monday at 08:00 UTC — usage analytics
     """
-    import subprocess
+    # This command is reached only through explicit setup; argv is fixed and shell is disabled.
+    import subprocess  # nosec B404
     import sys
 
     script = Path(__file__).resolve()
     python = sys.executable
 
     try:
-        result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+        result = subprocess.run(  # nosec B603, B607
+            ["crontab", "-l"], capture_output=True, text=True, check=False
+        )
         current = result.stdout.strip()
-    except Exception:
+    except OSError:
         current = ""
 
     if "# skill-router-start" in current:
@@ -346,14 +355,18 @@ def setup_cron(config: dict[str, Any] | None = None, dry_run: bool = False) -> N
         print(new_entries)
         return
 
-    proc = subprocess.run(["crontab"], input=new_cron, capture_output=True, text=True)
+    proc = subprocess.run(  # nosec B603, B607
+        ["crontab"], input=new_cron, capture_output=True, text=True, check=False
+    )
     if proc.returncode != 0:
         print(f"⚠️  Failed: {proc.stderr}")
         print("Add manually with `crontab -e`:")
         print(new_entries)
         return
 
-    result = subprocess.run(["crontab", "-l"], capture_output=True, text=True)
+    result = subprocess.run(  # nosec B603, B607
+        ["crontab", "-l"], capture_output=True, text=True, check=False
+    )
     if "skill-router" in result.stdout:
         print("✅ Cron jobs installed:")
         print("   • Daily sweep   (03:00 UTC) — auto-vault new skills")

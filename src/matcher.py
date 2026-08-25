@@ -18,7 +18,6 @@ from __future__ import annotations
 import re
 from typing import Any
 
-
 # ── Keyword matching ────────────────────────────────────
 
 STOP_WORDS: set[str] = {
@@ -131,6 +130,8 @@ class SkillMatcher:
         min_confidence: float = 0.3,
         max_results: int = 15,
     ) -> None:
+        if strategy != "keyword":
+            raise ValueError("Only the local keyword strategy is implemented")
         self.index = index
         self.strategy = strategy
         self.min_confidence = min_confidence
@@ -206,12 +207,15 @@ class SkillMatcher:
 
 if __name__ == "__main__":
     import argparse
-    from indexer import load_index
+    try:
+        from .indexer import load_index
+    except ImportError:
+        from indexer import load_index
 
     parser = argparse.ArgumentParser(description="Match user intent to skills")
     parser.add_argument("message", help="User input to match against")
     parser.add_argument("--index", default="~/.cache/skill-router/index.json", help="Path to index file")
-    parser.add_argument("--strategy", default="keyword", choices=["keyword", "hybrid"])
+    parser.add_argument("--strategy", default="keyword", choices=["keyword"])
     parser.add_argument("--confidence", type=float, default=0.3)
     parser.add_argument("--max", type=int, default=15)
     parser.add_argument("--json", action="store_true", help="Output as JSON")

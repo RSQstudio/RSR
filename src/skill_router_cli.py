@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Skill Router — intelligent skill loading for AI coding agents.
 
 Keep your agent fast. 600 skills in the vault, only 5-15 in active memory.
@@ -23,11 +22,35 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
-import os
 import sys
+from copy import deepcopy
 from pathlib import Path
 from typing import Any
+
+if __package__:
+    from . import agent_detector
+    from .cron import report, setup_cron, sweep
+    from .indexer import build_index, load_index
+    from .installer import run_install
+    from .matcher import SkillMatcher
+    from .vault_manager import (
+        activate_skills,
+        get_active_skills,
+        get_vault_skills,
+        reconcile,
+    )
+else:
+    import agent_detector
+    from cron import report, setup_cron, sweep
+    from indexer import build_index, load_index
+    from installer import run_install
+    from matcher import SkillMatcher
+    from vault_manager import (
+        activate_skills,
+        get_active_skills,
+        get_vault_skills,
+        reconcile,
+    )
 
 # ── Config loading ───────────────────────────────────────
 
@@ -41,48 +64,67 @@ DEFAULT_CONFIG = {
         "strategy": "keyword",
         "max_active_skills": 15,
         "min_confidence": 0.3,
-        "multi_field": True,
     },
-    "always_keep": [],            # Empty → installer asks user to pick
-    "logging": {
-        "level": "info",
-        "json_format": True,
-    },
+    "always_keep": [],
 }
 
 
+def _merge_config(defaults: dict[str, Any], overrides: dict[str, Any]) -> dict[str, Any]:
+    """Merge a user config over defaults without sharing mutable nested values."""
+    merged = deepcopy(defaults)
+    for key, value in overrides.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = _merge_config(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
 def load_config(config_path: str | Path | None = None) -> dict[str, Any]:
-    """Load config from YAML or use defaults."""
+    """Load JSON or YAML configuration and fill omitted supported defaults."""
     search_paths = [
         Path(config_path) if config_path else None,
+        Path("~/.config/skill-router/config.json").expanduser(),
         Path("~/.config/skill-router/config.yaml").expanduser(),
+        Path("config.json"),
         Path("config.yaml"),
     ]
 
     for sp in search_paths:
-        if sp and sp.exists():
+        if not sp or not sp.exists():
+            continue
+
+        text = sp.read_text(encoding="utf-8")
+        try:
+            loaded = json.loads(text)
+        except json.JSONDecodeError:
             try:
                 import yaml
-                with open(sp) as f:
-                    return yaml.safe_load(f)
-            except ImportError:
-                # No PyYAML — try reading as JSON (fallback)
-                with open(sp) as f:
-                    return json.load(f)
-            except Exception:
-                pass
+            except ImportError as exc:
+                raise RuntimeError(
+                    f"YAML configuration requires PyYAML: {sp}. "
+                    "Use JSON or install PyYAML."
+                ) from exc
+            loaded = yaml.safe_load(text)
 
-    return DEFAULT_CONFIG
+        if not isinstance(loaded, dict):
+            raise TypeError(f"Configuration root must be a mapping: {sp}")
+        config = _merge_config(DEFAULT_CONFIG, loaded)
+        if not isinstance(config.get("paths"), dict) or not isinstance(config.get("matching"), dict):
+            raise TypeError(f"Configuration paths and matching sections must be mappings: {sp}")
+        if not isinstance(config.get("always_keep"), list) or not all(isinstance(name, str) for name in config["always_keep"]):
+            raise TypeError(f"Configuration always_keep must be a list of skill names: {sp}")
+        return config
+
+    return deepcopy(DEFAULT_CONFIG)
 
 
 def _expand_path(path: str) -> Path:
     """Expand ~ and return absolute Path. 'auto' strings are resolved via agent_detector."""
     if path == "auto":
-        from agent_detector import resolve_skills_dir, resolve_vault_dir
-        return resolve_skills_dir()
+        return agent_detector.resolve_skills_dir()
     if path == "auto-vault":
-        from agent_detector import resolve_vault_dir
-        return resolve_vault_dir()
+        return agent_detector.resolve_vault_dir()
     return Path(path).expanduser().resolve()
 
 
@@ -90,8 +132,7 @@ def _resolve_vault(config: dict[str, Any]) -> Path:
     """Resolve vault path from config (handles 'auto')."""
     raw = config["paths"].get("vault", "auto")
     if raw == "auto":
-        from agent_detector import resolve_vault_dir
-        return resolve_vault_dir()
+        return agent_detector.resolve_vault_dir()
     return Path(raw).expanduser().resolve()
 
 
@@ -99,8 +140,7 @@ def _resolve_active(config: dict[str, Any]) -> Path:
     """Resolve active path from config (handles 'auto')."""
     raw = config["paths"].get("active", "auto")
     if raw == "auto":
-        from agent_detector import resolve_skills_dir
-        return resolve_skills_dir()
+        return agent_detector.resolve_skills_dir()
     return Path(raw).expanduser().resolve()
 
 
@@ -108,7 +148,6 @@ def _resolve_active(config: dict[str, Any]) -> Path:
 
 def cmd_index(config: dict[str, Any]) -> None:
     """Build skill index from vault."""
-    from indexer import build_index
 
     vault = _resolve_vault(config)
     cache = _expand_path(config["paths"]["index_cache"])
@@ -121,9 +160,6 @@ def cmd_index(config: dict[str, Any]) -> None:
 
 def cmd_route(config: dict[str, Any], message: str, auto_activate: bool = False) -> None:
     """Match user intent to skills."""
-    from indexer import load_index
-    from matcher import SkillMatcher
-    from vault_manager import reconcile
 
     cache = _expand_path(config["paths"]["index_cache"])
     if not cache.exists():
@@ -166,11 +202,9 @@ def cmd_route(config: dict[str, Any], message: str, auto_activate: bool = False)
 
 def cmd_status(config: dict[str, Any]) -> None:
     """Show current router state."""
-    from indexer import load_index
-    from vault_manager import get_active_skills, get_vault_skills
 
-    vault = _expand_path(config["paths"]["vault"])
-    active = _expand_path(config["paths"]["active"])
+    vault = _resolve_vault(config)
+    active = _resolve_active(config)
     cache = _expand_path(config["paths"]["index_cache"])
 
     active_skills = get_active_skills(active)
@@ -189,10 +223,10 @@ def cmd_status(config: dict[str, Any]) -> None:
         print(f"Index:     {cache} (built {age})")
         print(f"Fields:    {len(index.get('fields', {}))}")
     else:
-        print(f"Index:     NOT BUILT — run `skill-router index`")
+        print("Index:     NOT BUILT — run `skill-router index`")
 
     # List active
-    print(f"\nActive skills:")
+    print("\nActive skills:")
     for s in sorted(active_skills):
         tag = " 🔒" if s in always_keep else ""
         print(f"  {s}{tag}")
@@ -205,10 +239,9 @@ def cmd_reconcile(config: dict[str, Any], message: str) -> None:
 
 def cmd_activate(config: dict[str, Any], skills: list[str]) -> None:
     """Activate specific skills by name."""
-    from vault_manager import activate_skills
 
-    vault = _expand_path(config["paths"]["vault"])
-    active = _expand_path(config["paths"]["active"])
+    vault = _resolve_vault(config)
+    active = _resolve_active(config)
 
     result = activate_skills(vault, active, skills)
     print(json.dumps(result, indent=2))
@@ -216,7 +249,6 @@ def cmd_activate(config: dict[str, Any], skills: list[str]) -> None:
 
 def cmd_install(config: dict[str, Any], non_interactive: bool = False) -> None:
     """Interactive install wizard — auto-detects agent, finds skills, lets user choose always-keep."""
-    from installer import run_install
     run_install(config, non_interactive=non_interactive)
 
 
@@ -235,16 +267,15 @@ def cmd_config(config: dict[str, Any]) -> None:
         errors.append(f"Active dir not found: {active}")
 
     if errors:
-        print(f"\n⚠️  Config errors:")
+        print("\n⚠️  Config errors:")
         for e in errors:
             print(f"  - {e}")
     else:
-        print(f"\n✅ Config valid")
+        print("\n✅ Config valid")
 
 
 def cmd_cron(config: dict[str, Any], cron_cmd: str, days: int = 7, dry_run: bool = False) -> None:
     """Cron jobs: sweep, report, setup."""
-    from cron import sweep, report, setup_cron
 
     if cron_cmd == "sweep":
         result = sweep(config, dry_run=dry_run)
@@ -276,7 +307,7 @@ Examples:
   skill-router config
 """,
     )
-    parser.add_argument("--config", help="Path to config.yaml")
+    parser.add_argument("--config", default=None, help="Path to JSON or YAML configuration file")
 
     sub = parser.add_subparsers(dest="command")
 

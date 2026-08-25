@@ -159,26 +159,22 @@ The default is intentional: no embeddings to host, no request latency, and no op
 
 ## Configuration
 
-The installer writes `~/.config/skill-router/config.yaml`.
+The installer writes `~/.config/skill-router/config.json`. YAML remains supported for manually managed configuration when PyYAML is installed.
 
-```yaml
-paths:
-  vault: "auto"
-  active: "auto"
-  index_cache: "~/.cache/skill-router/index.json"
-
-matching:
-  strategy: "keyword"
-  max_active_skills: 15
-  min_confidence: 0.3
-  multi_field: true
-
-always_keep:
-  - rsq-skill-router
-
-logging:
-  level: "info"
-  json_format: true
+```json
+{
+  "paths": {
+    "vault": "auto",
+    "active": "auto",
+    "index_cache": "~/.cache/skill-router/index.json"
+  },
+  "matching": {
+    "strategy": "keyword",
+    "max_active_skills": 15,
+    "min_confidence": 0.3
+  },
+  "always_keep": ["rsq-skill-router"]
+}
 ```
 
 Use `auto` when one agent owns the machine. Set explicit paths when you operate several agents, profiles, or skill libraries on the same host.
@@ -186,7 +182,7 @@ Use `auto` when one agent owns the machine. Set explicit paths when you operate 
 ## Safety model
 
 - **Vault stays intact during normal routing.** The router does not modify or delete vault skills.
-- **Active changes are symlink-only.** It refuses to delete a real folder in the active directory.
+- **Router activation uses symlinks.** It refuses to replace real folders or remove unmanaged symlinks in the active directory.
 - **Always-on skills are protected.** Anything in `always_keep` survives reconciliation.
 - **Reconciliation adds before it removes.** The next task's skills are linked before stale ones are removed.
 - **Maintenance is explicit.** `cron sweep` can move newly added real skill folders into the vault. Run `skill-router cron sweep --dry-run` before enabling it on an existing installation.

@@ -12,10 +12,8 @@ Usage:
 
 from __future__ import annotations
 
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -119,14 +117,15 @@ AGENTS: list[AgentInfo] = [
 
 def _is_hermes_running() -> bool:
     """Check if Hermes gateway is active."""
-    import subprocess
+    # This only probes a fixed local service status command; no shell or user input.
+    import subprocess  # nosec B404
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # nosec B603, B607
             ["systemctl", "--user", "is-active", "hermes-gateway"],
-            capture_output=True, text=True, timeout=3
+            capture_output=True, text=True, timeout=3, check=False
         )
         return "active" in result.stdout
-    except Exception:
+    except (OSError, subprocess.TimeoutExpired):
         return False
 
 
@@ -154,7 +153,8 @@ def detect_agent() -> AgentInfo:
     # Phase 1: Look for active agents with real skill directories
     candidates: list[AgentInfo] = []
 
-    for agent in sorted(AGENTS, key=lambda a: -a.priority):
+    for registered in sorted(AGENTS, key=lambda a: -a.priority):
+        agent = replace(registered, detected=False, evidence=[])
         # Check for running process signals
         if agent.name == "Hermes Agent" and _is_hermes_running():
             agent.detected = True
@@ -171,14 +171,14 @@ def detect_agent() -> AgentInfo:
             )
             if has_skills:
                 agent.detected = True
-                agent.evidence.append(f"skills directory with SKILL.md files found")
+                agent.evidence.append("skills directory with SKILL.md files found")
                 candidates.append(agent)
                 continue
 
         # Check if config directory exists
         if agent.config_dir and agent.config_dir.is_dir():
             agent.detected = True
-            agent.evidence.append(f"config directory found")
+            agent.evidence.append("config directory found")
             candidates.append(agent)
             continue
 
@@ -188,8 +188,7 @@ def detect_agent() -> AgentInfo:
 
     # Fallback: return Hermes as default (most common in RSQ ecosystem)
     # but mark it as undetected so the installer asks
-    fallback = AGENTS[0]
-    fallback.detected = False
+    fallback = replace(AGENTS[0], detected=False, evidence=[])
     return fallback
 
 
@@ -197,7 +196,8 @@ def list_agents() -> list[AgentInfo]:
     """Return all registered agents with detection status."""
     detected = detect_agent()
     results: list[AgentInfo] = []
-    for agent in AGENTS:
+    for registered in AGENTS:
+        agent = replace(registered, detected=False, evidence=[])
         if agent.name == detected.name and detected.detected:
             results.append(detected)
         else:
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     else:
         print("  No agent detected. Run `skill-router install` for interactive setup.")
 
-    print(f"\n  Available agents:")
+    print("\n  Available agents:")
     for agent in AGENTS:
         skills = agent.skills_dir
         exists = "✓" if skills and skills.is_dir() else "✗"
