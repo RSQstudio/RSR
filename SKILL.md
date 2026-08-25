@@ -1,59 +1,66 @@
 ---
 name: rsq-skill-router
 description: |
-  Skill Router — intelligent skill activation for AI agents. 
-  Routes user intent → matching skills → activates them from vault. 
-  Trigger on "route skills for", "what skills should I use for", 
-  "activate skills for", "skill-router route", "skill-router reconcile",
-  or when the agent needs to find the right skill for a task.
-  This skill IS the router. Use it to manage which skills are active.
+  Loaded automatically at session start. Before responding to ANY user request,
+  run skill-router reconcile to activate the right skills for the task.
+  Trigger on every message — this skill MUST run first.
 ---
 
-# Skill Router
+# RSQ Skill Router — Agent Instructions
 
-You have access to a **Skill Router** system. Skills live in a vault at `~/RSQ/fields-skills/by-field/`. Only a subset are active at any time.
+You are the agent. This skill routes other skills. **This is the first thing you do on every turn.**
 
-## What The Router Does
+## Mandatory Rule
 
-- **Indexes** all 576 skills across 10 fields
-- **Matches** user intent to the right skills using keyword scoring
-- **Activates** only the needed skills (symlinks from vault → active)
-- **Deactivates** stale skills (removes unused symlinks)
-- **Protects** always-keep skills (caveman, un-slop, etc.)
+**Before executing any user request, run:**
 
-## Commands You Can Run
+```bash
+skill-router reconcile "<the user's exact request>"
+```
 
-| Command | What It Does |
-|---------|-------------|
-| `python ~/RSQ/skill-router/src/skill_router_cli.py status` | Show active skills, vault size, index age |
-| `python ~/RSQ/skill-router/src/skill_router_cli.py index` | Rebuild skill index |
-| `python ~/RSQ/skill-router/src/skill_router_cli.py route "user message"` | Match intent → skills (read-only) |
-| `python ~/RSQ/skill-router/src/skill_router_cli.py route --auto "user message"` | Match AND activate skills |
-| `python ~/RSQ/skill-router/src/skill_router_cli.py reconcile "user message"` | Full cycle: route → activate → deactivate |
-| `python ~/RSQ/skill-router/src/skill_router_cli.py activate skill-a skill-b` | Activate specific skills |
+This activates the right skills from the vault. Don't skip this. Don't ask the user about it. Just do it.
 
-## When To Use
+## What Happens
 
-Run `skill-router reconcile` at the start of every session, and whenever the user's task changes significantly.
+1. You run `skill-router reconcile "user's message"`
+2. The router matches the user's intent to the right field(s) and skills
+3. It creates symlinks from vault → your active skills directory
+4. It deactivates skills from previous tasks that are no longer relevant
+5. The new skills are now available to you
+6. You use them to fulfill the user's request
 
-Example workflow:
-1. User says "I need to write cold email sequences for enterprise prospects"
-2. Run: `skill-router reconcile "write cold email sequences for enterprise prospects"`
-3. Router activates: cold-email (master orchestrator), copywriting sub-skills, sales sequence builder
-4. Now those skills are loaded in the agent's active skill directory
-5. Agent uses them for the task
+## Example
+
+```
+User: "Write a cold email sequence for enterprise SaaS prospects"
+
+Agent (you):
+  1. Run: skill-router reconcile "write a cold email sequence for enterprise SaaS prospects"
+  2. Output shows: activated cold-email-4-sequence, email-writing-frameworks, etc.
+  3. Now use those skills to write the email
+  4. Deliver the result to the user
+```
+
+## Commands You Run
+
+| Command | When |
+|---------|------|
+| `skill-router reconcile "user's request"` | **Every turn, before doing work** |
+| `skill-router status` | When the user asks "what skills are active" |
+
+The user never types these. You do. Automatically.
 
 ## Fields Available
 
-The vault has 10 fields. The router matches the user's intent to the right field:
+The vault has 10 fields. The router auto-matches user intent to the right field:
 
 | Field | Skills | Signal Keywords |
 |-------|:------:|-----------------|
-| coding | 288 | build, code, debug, refactor, api, architecture, python, react, docker |
+| coding | 288 | build, code, debug, refactor, api, python, react, docker, kubernetes |
 | consulting | 120 | strategy, mece, hypothesis, m&a, due diligence, board deck, framework |
 | marketing | 43 | campaign, seo, content, launch, brand, social media, ads |
 | sales | 41 | pipeline, crm, abm, outbound, sdr, lead, linkedin, cold email |
-| finance | 37 | accounting, tax, cash flow, p&l, cfo, budget, invoice |
+| finance | 37 | accounting, tax, cash flow, p&l, cfo, budget, invoice, financial model |
 | hr | 33 | recruiting, onboarding, performance, hris, compensation, compliance |
 | copywriting | 10 | write, copy, email, subject line, hook, headline, storytelling |
 | customer-support | 2 | ticket, triage, helpdesk, escalation, knowledge base |
@@ -62,8 +69,8 @@ The vault has 10 fields. The router matches the user's intent to the right field
 
 ## Multi-Field Routing
 
-Some tasks span fields. The router handles this:
+Some tasks span fields. The router handles this automatically:
 - "Write a cold email" → copywriting + sales
 - "Financial model + presentation" → finance + consulting
-- "Campaign landing page with SEO" → marketing + coding
+- "Create a campaign landing page" → marketing + coding
 - "Audit sales pipeline" → sales + consulting

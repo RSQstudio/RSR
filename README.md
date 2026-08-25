@@ -56,13 +56,27 @@ python3 src/skill_router_cli.py install
 
 ---
 
-## Quick Start (after install)
+**That's it.** The router is loaded as an always-on skill after installation. From this point on, you just talk to your agent normally. The router handles everything invisibly:
+
+```
+You: "Write a cold email sequence for enterprise SaaS prospects"
+     → Agent reads rsq-skill-router SKILL.md
+     → Agent runs: skill-router reconcile "write a cold email sequence..."
+     → Router activates: cold-email-4-sequence, email-writing-frameworks, etc.
+     → Agent now has the right skills loaded — writes your email
+
+You: "Build a financial model for Q3 projections"
+     → Agent runs: skill-router reconcile "build a financial model..."
+     → Previous sales skills deactivated, finance + consulting skills activated
+     → Agent builds your model
+```
+
+**Commands you'll actually use** (agent handles the rest):
 
 ```bash
-skill-router status                     # See what's active
-skill-router route "write a cold email"  # Match skills (read-only)
-skill-router reconcile "build a Q3 model" # Full cycle: route → activate → deactivate
-skill-router cron setup                  # Install background maintenance jobs
+skill-router status          # See what's active
+skill-router cron setup       # Install background maintenance
+skill-router cron report      # Weekly usage analytics
 ```
 
 **What the installer does:**
