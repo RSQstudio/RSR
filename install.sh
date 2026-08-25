@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # RSQ Skill Router — one-command installer
-# curl -sSL https://raw.githubusercontent.com/RSQstudio/RSR/main/install.sh | bash
+# Run after authenticated clone: bash ~/.rsq-skill-router/install.sh
 
 set -euo pipefail
 
@@ -55,7 +55,7 @@ if [ -d "$INSTALL_DIR" ]; then
 else
     git clone --depth 1 "$REPO" "$INSTALL_DIR" 2>/dev/null || {
         echo -e "${RED}Failed to clone repository.${NC}"
-        echo "  Make sure the repo exists and is public: $REPO"
+        echo "  Verify the repository exists and your GitHub account has access: $REPO"
         exit 1
     }
 fi

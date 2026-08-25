@@ -16,10 +16,13 @@ RSQ Skill Router keeps the full library in a vault, indexes it locally, and expo
 
 ## Install
 
-### Recommended: bootstrap installer
+### Recommended: authenticated bootstrap installer
+
+RSR is private. Clone it with an account that has access, then run the installer:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/RSQstudio/RSR/main/install.sh | bash
+git clone https://github.com/RSQstudio/RSR.git ~/.rsq-skill-router
+bash ~/.rsq-skill-router/install.sh
 ```
 
 The bootstrap installer:
@@ -34,7 +37,7 @@ It needs Python 3.10+, Git, and repository access while RSR remains private.
 
 The installer preselects `caveman` and `anti-slop` when installed. `caveman` keeps the agent terse and low-overhead; `anti-slop` removes generic AI prose before delivery. If either is absent, the wizard recommends it and states that benefit. `un-slop` remains an on-demand vault skill, not an always-on default.
 
-### Alternative: install from source
+### Alternative: package install without the bootstrap script
 
 ```bash
 git clone https://github.com/RSQstudio/RSR.git ~/.rsq-skill-router
