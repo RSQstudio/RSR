@@ -32,7 +32,7 @@ The bootstrap installer:
 
 It needs Python 3.10+, Git, and repository access while RSR remains private.
 
-The installer preselects `caveman` and, when available, one direct-output anti-slop skill. It reads each candidate’s metadata rather than trusting the name: a self-correction skill is eligible; a meta-skill that generates another skill is not. It never selects both `un-slop` and `anti-slop`. If neither is present—or both are equally suitable—the wizard explains the benefit and asks the user to choose rather than guessing.
+The installer preselects `caveman` and `anti-slop` when installed. `caveman` keeps the agent terse and low-overhead; `anti-slop` removes generic AI prose before delivery. If either is absent, the wizard recommends it and states that benefit. `un-slop` remains an on-demand vault skill, not an always-on default.
 
 ### Alternative: install from source
 

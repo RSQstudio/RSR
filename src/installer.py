@@ -49,29 +49,17 @@ def _yesno(prompt: str, default: bool = True) -> bool:
     return result in ("y", "yes")
 
 
-ANTI_SLOP_ALIASES = ("un-slop", "unslop", "anti-slop", "antislop")
-
-
-def _anti_slop_score(description: str) -> int:
-    """Score whether an anti-slop skill is safe to keep active for every task."""
-    text = description.lower()
-    score = 0
-    for phrase in ("self-correction", "automatically", "all prose", "all output", "before delivering", "writing", "editing"):
-        if phrase in text:
-            score += 2
-    for phrase in ("generate a reusable skill", "analyze a domain", "domain-specific profile", "clone", "run the repo", "install"):
-        if phrase in text:
-            score -= 4
-    return score
+ANTI_SLOP_ALIASES = ("anti-slop", "antislop")
+UNSLOP_ALIASES = ("un-slop", "unslop")
 
 
 def recommended_always_keep(
     available_skills: list[str],
     descriptions: dict[str, str] | None = None,
 ) -> tuple[list[str], list[str]]:
-    """Choose useful defaults from metadata; never choose two overlapping anti-slop skills."""
+    """Choose the stable always-on communication defaults."""
+    del descriptions  # Reserved for future recommendations; names are intentional defaults here.
     available = set(available_skills)
-    descriptions = descriptions or {}
     selected: list[str] = []
     missing: list[str] = []
 
@@ -80,22 +68,11 @@ def recommended_always_keep(
     else:
         missing.append("caveman")
 
-    anti_slop_candidates = [name for name in ANTI_SLOP_ALIASES if name in available]
-    if anti_slop_candidates:
-        scores = {
-            name: _anti_slop_score(descriptions.get(name, ""))
-            for name in anti_slop_candidates
-        }
-        best_score = max(scores.values())
-        best = [name for name, score in scores.items() if score == best_score]
-        if best_score > 0 and len(best) == 1:
-            selected.append(best[0])
-        elif len(anti_slop_candidates) == 1:
-            missing.append("a direct anti-slop skill")
-        else:
-            missing.append(f"choose one anti-slop skill manually ({', '.join(anti_slop_candidates)})")
+    anti_slop = next((name for name in ANTI_SLOP_ALIASES if name in available), None)
+    if anti_slop:
+        selected.append(anti_slop)
     else:
-        missing.append("un-slop or anti-slop")
+        missing.append("anti-slop")
 
     return selected, missing
 
@@ -110,7 +87,7 @@ def configured_always_keep(
     available = set(available_skills)
 
     for name in configured_skills:
-        if name not in available or name in selected or name in ANTI_SLOP_ALIASES:
+        if name not in available or name in selected or name in ANTI_SLOP_ALIASES or name in UNSLOP_ALIASES:
             continue
         selected.append(name)
 
@@ -295,12 +272,8 @@ def run_install(
         for name in missing_recommendations:
             if name == "caveman":
                 print("    • caveman — concise, low-overhead agent responses")
-            elif name.startswith("choose one anti-slop skill manually"):
-                print(f"    • {name}")
-            elif name == "a direct anti-slop skill":
-                print("    • a direct anti-slop skill — avoid meta-skills that only generate another skill")
             else:
-                print("    • un-slop or anti-slop — cleaner, less generic output")
+                print("    • anti-slop — removes generic AI prose and forces direct, human-readable output")
     print("  Other common choices:")
     print("    • The router itself (rsq-skill-router)")
     print("    • Essential tooling (caveman-help, caveman-commit)")

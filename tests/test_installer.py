@@ -27,7 +27,7 @@ class InstallRouterSkillTests(unittest.TestCase):
         self.assertEqual(selected, ["caveman", "anti-slop"])
         self.assertEqual(missing, [])
 
-    def test_requires_manual_choice_when_two_candidates_are_equally_suitable(self) -> None:
+    def test_prefers_anti_slop_when_both_skills_are_available(self) -> None:
         selected, missing = recommended_always_keep(
             ["caveman", "anti-slop", "un-slop"],
             {
@@ -36,17 +36,26 @@ class InstallRouterSkillTests(unittest.TestCase):
             },
         )
 
-        self.assertEqual(selected, ["caveman"])
-        self.assertEqual(missing, ["choose one anti-slop skill manually (un-slop, anti-slop)"])
+        self.assertEqual(selected, ["caveman", "anti-slop"])
+        self.assertEqual(missing, [])
 
-    def test_rejects_meta_unslop_as_always_on(self) -> None:
+    def test_preselects_anti_slop_when_installed(self) -> None:
+        selected, missing = recommended_always_keep(
+            ["caveman", "anti-slop"],
+            {"anti-slop": "Analyze a domain and generate a reusable skill file."},
+        )
+
+        self.assertEqual(selected, ["caveman", "anti-slop"])
+        self.assertEqual(missing, [])
+
+    def test_recommends_anti_slop_when_only_unslop_is_available(self) -> None:
         selected, missing = recommended_always_keep(
             ["caveman", "un-slop"],
             {"un-slop": "Analyze a domain and generate a reusable skill file."},
         )
 
         self.assertEqual(selected, ["caveman"])
-        self.assertEqual(missing, ["a direct anti-slop skill"])
+        self.assertEqual(missing, ["anti-slop"])
 
     def test_uses_direct_anti_slop_when_un_slop_is_not_available(self) -> None:
         selected, missing = recommended_always_keep(
@@ -61,7 +70,7 @@ class InstallRouterSkillTests(unittest.TestCase):
         selected, missing = recommended_always_keep(["other-skill"])
 
         self.assertEqual(selected, [])
-        self.assertEqual(missing, ["caveman", "un-slop or anti-slop"])
+        self.assertEqual(missing, ["caveman", "anti-slop"])
 
     def test_keeps_configured_extras_without_duplicate_anti_slop_skill(self) -> None:
         selected = configured_always_keep(
@@ -194,10 +203,10 @@ class InstallRouterSkillTests(unittest.TestCase):
             self.assertTrue(destination.is_file())
             self.assertEqual(destination.read_text(encoding="utf-8"), (Path.cwd() / "SKILL.md").read_text(encoding="utf-8"))
             self.assertTrue((active / "caveman" / "SKILL.md").is_file())
-            self.assertTrue((active / "un-slop" / "SKILL.md").is_file())
+            self.assertTrue((vault / "_inbox" / "un-slop" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "demo-skill" / "SKILL.md").is_file())
             written_config = json.loads((root / ".config" / "skill-router" / "config.yaml").read_text(encoding="utf-8"))
-            self.assertEqual(written_config["always_keep"], ["caveman", "un-slop"])
+            self.assertEqual(written_config["always_keep"], ["caveman"])
 
 
 if __name__ == "__main__":
