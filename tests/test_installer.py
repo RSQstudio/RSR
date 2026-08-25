@@ -205,7 +205,9 @@ class InstallRouterSkillTests(unittest.TestCase):
             self.assertTrue((active / "caveman" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "un-slop" / "SKILL.md").is_file())
             self.assertTrue((vault / "_inbox" / "demo-skill" / "SKILL.md").is_file())
-            written_config = json.loads((root / ".config" / "skill-router" / "config.json").read_text(encoding="utf-8"))
+            config_path = root / ".config" / "skill-router" / "config.json"
+            written_config = json.loads(config_path.read_text(encoding="utf-8"))
+            self.assertEqual(config_path.stat().st_mode & 0o777, 0o600)
             self.assertEqual(written_config["always_keep"], ["caveman"])
 
 

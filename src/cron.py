@@ -141,7 +141,7 @@ def log_usage(action: str, details: dict[str, Any] | None = None) -> None:
     log_path = _usage_log_path()
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    entry = {
+    entry: dict[str, Any] = {
         "ts": datetime.now(timezone.utc).isoformat(),
         "action": action,
     }

@@ -4,16 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rsq-skill-router"
-version = "0.1.4"
+version = "0.1.5"
 description = "Intelligent skill loading for AI coding agents — keep your agent fast by routing skills on-demand"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [{name = "RSQ"}]
 keywords = ["ai", "agent", "skills", "claude-code", "codex", "cursor", "hermes", "skill-router"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",

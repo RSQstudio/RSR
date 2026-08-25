@@ -31,7 +31,7 @@ def _log_router_action(action: str, details: dict[str, Any] | None = None) -> No
     try:
         log_path = Path("~/.cache/skill-router/usage.jsonl").expanduser()
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        entry = {
+        entry: dict[str, Any] = {
             "ts": datetime.now(timezone.utc).isoformat(),
             "action": action,
         }

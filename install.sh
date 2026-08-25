@@ -32,6 +32,10 @@ if ! command -v python3 &> /dev/null; then
 fi
 
 PYTHON_VERSION=$(python3 -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')")
+if ! python3 -c 'import sys; raise SystemExit(sys.version_info < (3, 10))'; then
+    echo -e "${RED}Error: Python 3.10 or newer is required (found ${PYTHON_VERSION}).${NC}"
+    exit 1
+fi
 echo -e "  ✓ python3 ${PYTHON_VERSION}"
 
 if ! command -v git &> /dev/null; then

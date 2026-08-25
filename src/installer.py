@@ -458,7 +458,8 @@ def run_install(
     }
 
     import json
-    config_file.write_text(json.dumps(out_config, indent=2))
+    config_file.write_text(json.dumps(out_config, indent=2), encoding="utf-8")
+    config_file.chmod(0o600)
     print(f"  💾 Config saved to {config_file}")
 
     # ── Offer cron setup ──

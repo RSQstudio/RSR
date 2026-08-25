@@ -1,6 +1,6 @@
 {
   "name": "rsq-skill-router",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Intelligent skill loading for AI coding agents — keep your agent fast by routing skills on-demand",
   "license": "MIT",
   "author": "RSQ",
