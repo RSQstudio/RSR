@@ -22,7 +22,7 @@ vault/        active/
 ### Option 1: curl + bash (recommended)
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/RSHQ/skill-router/main/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/RED-NTWRK/RSR/main/install.sh | bash
 ```
 
 Downloads the repo to `~/.rsq-skill-router/`, creates a `skill-router` CLI wrapper in `~/.local/bin/`, and launches the interactive setup wizard.
@@ -30,7 +30,7 @@ Downloads the repo to `~/.rsq-skill-router/`, creates a `skill-router` CLI wrapp
 ### Option 2: pip
 
 ```bash
-pip install git+https://github.com/RSHQ/skill-router.git
+pip install git+https://github.com/RED-NTWRK/RSR.git
 ```
 
 Then run the wizard:
@@ -49,7 +49,7 @@ Uses a thin Node wrapper — still requires `python3` on your system.
 ### Option 4: manual clone
 
 ```bash
-git clone https://github.com/RSHQ/skill-router.git ~/rsq-skill-router
+git clone https://github.com/RED-NTWRK/RSR.git ~/rsq-skill-router
 cd ~/rsq-skill-router
 python3 src/skill_router_cli.py install
 ```

@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # RSQ Skill Router — one-command installer
-# curl -sSL https://raw.githubusercontent.com/RSHQ/skill-router/main/install.sh | bash
+# curl -sSL https://raw.githubusercontent.com/RED-NTWRK/RSR/main/install.sh | bash
 
 set -euo pipefail
 
-REPO="https://github.com/RSHQ/skill-router.git"
+REPO="https://github.com/RED-NTWRK/RSR.git"
 INSTALL_DIR="${HOME}/.rsq-skill-router"
 BIN_DIR="${HOME}/.local/bin"
 SCRIPT_NAME="skill-router"

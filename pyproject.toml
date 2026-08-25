@@ -24,8 +24,8 @@ classifiers = [
 requires-python = ">=3.10"
 
 [project.urls]
-Homepage = "https://github.com/RSHQ/skill-router"
-Repository = "https://github.com/RSHQ/skill-router.git"
+Homepage = "https://github.com/RED-NTWRK/RSR"
+Repository = "https://github.com/RED-NTWRK/RSR.git"
 
 [project.scripts]
 skill-router = "src.skill_router_cli:main"
