@@ -6,50 +6,9 @@ An AI agent with 100 skills loaded burns ~10,000 tokens before the first prompt.
 
 ## Architecture
 
-RSQ Skill Router uses a vault-based architecture — skills live in a read-only vault and are symlinked into the agent's active directory on demand.
+![Vault Architecture](diagrams/vault-architecture.svg)
 
-```
-┌─────────────────────────┐          ┌──────────────────────┐
-│        VAULT            │          │       ACTIVE         │
-│  (read-only source)     │  ROUTER  │  (agent reads here)  │
-│                         │          │                      │
-│  coding/      288       │─────────→│  cold-email-4-seq    │
-│  consulting/  120       │  match   │  email-frameworks    │
-│  finance/      37       │  intent  │  sales-seq-builder   │
-│  marketing/    43       │          │  subject-lines       │
-│  sales/        41       │  ─ ─ ─ → │  list-building       │
-│  hr/           33       │ deactiv  │                      │
-│  copywriting/  10       │  stale   │  🔒 caveman          │
-│  cs/ 2  pm/ 1  fi/ 1   │          │  🔒 un-slop          │
-│                         │          │  🔒 router           │
-│  568 total              │          │  5–15 max (+always)  │
-└─────────────────────────┘          └──────────────────────┘
-```
-
-**[📊 Full diagram →](https://htmlpreview.github.io/?https://github.com/RED-NTWRK/RSR/blob/main/diagrams/vault-architecture.html)**
-
-## Component Architecture
-
-Eight modules, one CLI. Install once, route forever.
-
-```
-  AGENT reads SKILL.md ──→  skill-router CLI
-                                   │
-          ┌────────────────────────┼──────────────────────┐
-          │              │         │         │            │
-     install.py     indexer.py  matcher.py  vault_mgr  cron.py
-          │              │         │         │            │
-   Interactive       Scans     Keyword    Symlink    24h sweep
-   wizard           vault     scoring     ops       weekly rpt
-          │              │         │         │            │
-          └──────────────┴─────────┴─────────┴────────────┘
-                                   │
-                    ┌──────────────┼──────────────┐
-               ~/.hermes/skills-vault/     ~/.hermes/skills/
-               (read-only · 568 skills)    (symlinks · agent reads)
-```
-
-**[📊 Full diagram →](https://htmlpreview.github.io/?https://github.com/RED-NTWRK/RSR/blob/main/diagrams/component-architecture.html)**
+![Component Architecture](diagrams/component-architecture.svg)
 
 ## Install
 
